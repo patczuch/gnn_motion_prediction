@@ -11,8 +11,8 @@ class GATEncoder(torch.nn.Module):
         rotation_dim = 9
         input_dim = rotation_dim * context_length
 
-        hid_lyrs = [8, 8]
-        heads_num = 8
+        hid_lyrs = [16, 16, 16]
+        heads_num = 16
 
         e_Fs = [input_dim] + hid_lyrs + [z_dim]
         self.convs = []
@@ -48,8 +48,8 @@ class GATDecoder(torch.nn.Module):
 
         out_dim = 9
 
-        hid_lyrs = [8, 8]
-        heads_num = 8
+        hid_lyrs = [16, 16, 16]
+        heads_num = 16
         tgt_all_lyr = True
 
         tgt_dim = 9
