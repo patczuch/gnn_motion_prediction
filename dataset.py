@@ -47,7 +47,7 @@ class BVHMotionDataset(Dataset):
                         angles_deg[:,j,ci] = torch.tensor(values)
 
                 angles = angles_deg * 3.14159265359 / 180.0
-                rotmats = euler_to_matrix_xyz(angles)
+                rotmats = euler_to_matrix_zyx(angles)
 
                 torch.save(rotmats, cache_path)
                 print("  wrote cached rotations")
@@ -89,24 +89,29 @@ class BVHMotionDataset(Dataset):
 
         return src_graph, tgt_graph
 
-def euler_to_matrix_xyz(e):
-    x, y, z = e[...,0], e[...,1], e[...,2]
 
-    cx, cy, cz = torch.cos(x), torch.cos(y), torch.cos(z)
-    sx, sy, sz = torch.sin(x), torch.sin(y), torch.sin(z)
+def euler_to_matrix_zyx(e):
+    x = e[..., 0]
+    y = e[..., 1]
+    z = e[..., 2]
 
-    rot = torch.zeros(e.shape[:-1] + (3,3), dtype=e.dtype)
+    cx = torch.cos(x); sx = torch.sin(x)
+    cy = torch.cos(y); sy = torch.sin(y)
+    cz = torch.cos(z); sz = torch.sin(z)
 
-    rot[...,0,0] = cy*cz
-    rot[...,0,1] = -cy*sz
-    rot[...,0,2] = sy
+    out_shape = e.shape[:-1] + (3, 3)
+    R = torch.empty(out_shape, dtype=e.dtype, device=e.device)
 
-    rot[...,1,0] = sx*sy*cz + cx*sz
-    rot[...,1,1] = -sx*sy*sz + cx*cz
-    rot[...,1,2] = -sx*cy
+    R[..., 0, 0] = cy * cz
+    R[..., 0, 1] = sx * sy * cz - sz * cx
+    R[..., 0, 2] = sx * sz + sy * cx * cz
 
-    rot[...,2,0] = -cx*sy*cz + sx*sz
-    rot[...,2,1] = cx*sy*sz + sx*cz
-    rot[...,2,2] = cx*cy
+    R[..., 1, 0] = sz * cy
+    R[..., 1, 1] = sx * sy * sz + cx * cz
+    R[..., 1, 2] = -sx * cz + sy * sz * cx
 
-    return rot
+    R[..., 2, 0] = -sy
+    R[..., 2, 1] = sx * cy
+    R[..., 2, 2] = cx * cy
+
+    return R

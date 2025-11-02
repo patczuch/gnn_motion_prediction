@@ -10,7 +10,7 @@ from dataset import BVHMotionDataset
 if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    dataset = BVHMotionDataset("./datasets/lafan1test2", context=10, step=10)
+    dataset = BVHMotionDataset("./datasets/lafan1train", context=10, step=10)
 
     val_ratio = 0.2
     total = len(dataset)
