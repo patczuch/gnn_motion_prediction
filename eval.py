@@ -76,7 +76,7 @@ if __name__ == "__main__":
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     model.eval()
 
-    loss_fn = nn.MSELoss()
+    loss_fn = nn.MSELoss(reduction='sum')
 
     print(f"Loaded dataset with {len(dataset)} samples")
     print(f"Testing model: {checkpoint_path}")

@@ -29,7 +29,7 @@ if __name__ == "__main__":
     model = Model().to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-    loss_fn = nn.MSELoss()
+    loss_fn = nn.MSELoss(reduction='sum')
 
     print(f"Train size: {len(train_loader) * batch_size}, Validation size: {len(val_loader) * batch_size}")
 
