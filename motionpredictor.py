@@ -11,8 +11,8 @@ class GATEncoder(torch.nn.Module):
         rotation_dim = 9
         input_dim = rotation_dim * context_length
 
-        hid_lyrs = [16, 16, 16]
-        heads_num = 16
+        hid_lyrs = [8, 8]
+        heads_num = 8
 
         e_Fs = [input_dim] + hid_lyrs + [z_dim]
         self.convs = []
@@ -29,23 +29,17 @@ class GATEncoder(torch.nn.Module):
         self.convs = torch.nn.ModuleList(self.convs)
 
     def forward(self, src_graph):
-        x = src_graph.src_x
-        edge_index_bi = src_graph.edge_index_bidirection
+        x = src_graph.x
+        edge_index = src_graph.edge_index
         batch_id = src_graph.batch
 
         for i, conv in enumerate(self.convs):
-            x = conv(x, edge_index_bi)
+            x = conv(x, edge_index)
 
             if (i + 1) != len(self.convs):
                 x = torch.nn.ReLU()(x)
 
-        V_mask = src_graph.mask
-        if V_mask.sum() > 0:
-            pool_z_x = global_max_pool(x[~V_mask], batch_id[~V_mask])
-        else:
-            pool_z_x = global_max_pool(x, batch_id)
-
-        return pool_z_x
+        return global_max_pool(x, batch_id)
 
 
 class GATDecoder(torch.nn.Module):
@@ -54,8 +48,8 @@ class GATDecoder(torch.nn.Module):
 
         out_dim = 9
 
-        hid_lyrs = [16, 16, 16]
-        heads_num = 16
+        hid_lyrs = [8, 8]
+        heads_num = 8
         tgt_all_lyr = True
 
         tgt_dim = 9
@@ -76,13 +70,13 @@ class GATDecoder(torch.nn.Module):
 
     def forward(self, src_z, tgt_graph):
         dec_x = src_z[tgt_graph.batch]
-        tgt_x = tgt_graph.tgt_x
+        tgt_x = tgt_graph.x
 
-        edge_index_bi = tgt_graph.edge_index_bidirection
+        edge_index = tgt_graph.edge_index
         dec_x = torch.hstack((dec_x, tgt_x))
 
         for i, conv in enumerate(self.deconvs):
-            dec_x = conv(dec_x, edge_index_bi)
+            dec_x = conv(dec_x, edge_index)
 
             if (i + 1) != len(self.deconvs):
                 dec_x = torch.nn.ReLU()(dec_x)

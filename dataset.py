@@ -2,11 +2,10 @@ import os
 import torch
 from torch_geometric.data import Data, Dataset
 from bvh import Bvh
-from scipy.spatial.transform import Rotation as R
 
 
 class BVHMotionDataset(Dataset):
-    def __init__(self, directory, context=10, step=1):
+    def __init__(self, directory, context, step):
         super().__init__()
         self.directory = directory
         self.context = context
@@ -17,22 +16,37 @@ class BVHMotionDataset(Dataset):
         self.joint_names = None
         self.edges = None
 
-        for fname in os.listdir(directory):
-            if not fname.endswith(".bvh"):
-                continue
-            filepath = os.path.join(directory, fname)
+        self.cache = {}
 
+        print("Loading dataset...")
+        bvh_files = [f for f in os.listdir(directory) if f.endswith(".bvh")]
+        for i, fname in enumerate(bvh_files, 1):
+            print(f"{fname} ({i}/{len(bvh_files)})")
+
+            filepath = os.path.join(directory, fname)
             with open(filepath) as f:
                 mocap = Bvh(f.read())
-
-            nframes = mocap.nframes
-
-            for start in range(0, nframes - self.total_frames, self.step):
-                self.samples.append((filepath, start))
 
             if self.joint_names is None:
                 self.joint_names = mocap.get_joints_names()
                 self.edges = self._build_edges(mocap)
+            J = len(self.joint_names)
+
+            F = mocap.nframes
+            angles_deg = torch.zeros(F, J, 3)
+
+            for j, name in enumerate(self.joint_names):
+                for ch_i, ch in enumerate(["Xrotation", "Yrotation", "Zrotation"]):
+                    values = [mocap.frame_joint_channel(f, name, ch)
+                              for f in range(F)]
+                    angles_deg[:,j,ch_i] = torch.tensor(values)
+
+            self.cache[filepath] = euler_to_matrix_xyz(angles_deg * 3.14159265359 / 180.0)
+
+            for start in range(0, F - self.total_frames, self.step):
+                self.samples.append((filepath, start))
+
+        print(f"Dataset loaded: {len(self.samples)} samples.")
 
     def _build_edges(self, mocap):
         edges = []
@@ -40,60 +54,49 @@ class BVHMotionDataset(Dataset):
             p = mocap.joint_parent_index(name)
             if p != -1:
                 edges.append((p, j))
-                edges.append((j, p))  # bidirectional
+                edges.append((j, p))
         return torch.tensor(edges, dtype=torch.long).t().contiguous()
-
-    def _rotmat(self, mocap, joint, frame):
-        ch = mocap.joint_channels(joint)
-        if not all(c in ch for c in ["Xrotation","Yrotation","Zrotation"]):
-            return torch.eye(3, dtype=torch.float32)
-
-        euler = (
-            mocap.frame_joint_channel(frame, joint, "Xrotation"),
-            mocap.frame_joint_channel(frame, joint, "Yrotation"),
-            mocap.frame_joint_channel(frame, joint, "Zrotation"),
-        )
-        return torch.tensor(R.from_euler("xyz", euler, degrees=True).as_matrix(),
-                            dtype=torch.float32)
 
     def __len__(self):
         return len(self.samples)
 
     def __getitem__(self, idx):
         filepath, start = self.samples[idx]
+        rot = self.cache[filepath]
 
-        with open(filepath) as f:
-            mocap = Bvh(f.read())
-
-        J = len(self.joint_names)
+        J = rot.shape[1]
         H = self.context
 
-        context = torch.zeros(J, H, 9)
-        for t in range(H):
-            frame = start + t
-            for j, name in enumerate(self.joint_names):
-                context[j, t] = self._rotmat(mocap, name, frame).reshape(9)
+        context = rot[start:start+H].reshape(H, J, 9).permute(1,0,2).reshape(J, H*9)
 
-        target_frame = start + H
-        target = torch.zeros(J, 9)
-        for j, name in enumerate(self.joint_names):
-            target[j] = self._rotmat(mocap, name, target_frame).reshape(9)
-
-        src_x = context.reshape(J, H * 9)
+        target = rot[start+H].reshape(J,9)
 
         batch = torch.zeros(J, dtype=torch.long)
-        mask = torch.zeros(J, dtype=torch.bool)
 
-        src_graph = Data()
-        src_graph.src_x = src_x
-        src_graph.edge_index_bidirection = self.edges
-        src_graph.batch = batch
-        src_graph.mask = mask
-
-        tgt_graph = Data()
-        tgt_graph.tgt_x = target
-        tgt_graph.edge_index_bidirection = self.edges
-        tgt_graph.batch = batch
-        tgt_graph.mask = mask
+        src_graph = Data(x=context, edge_index=self.edges, batch=batch)
+        tgt_graph = Data(x=target,  edge_index=self.edges, batch=batch)
 
         return src_graph, tgt_graph
+
+
+def euler_to_matrix_xyz(e):
+    x, y, z = e[...,0], e[...,1], e[...,2]
+
+    cx, cy, cz = torch.cos(x), torch.cos(y), torch.cos(z)
+    sx, sy, sz = torch.sin(x), torch.sin(y), torch.sin(z)
+
+    rot = torch.zeros(e.shape[:-1] + (3,3), dtype=e.dtype, device=e.device)
+
+    rot[...,0,0] = cy*cz
+    rot[...,0,1] = -cy*sz
+    rot[...,0,2] = sy
+
+    rot[...,1,0] = sx*sy*cz + cx*sz
+    rot[...,1,1] = -sx*sy*sz + cx*cz
+    rot[...,1,2] = -sx*cy
+
+    rot[...,2,0] = -cx*sy*cz + sx*sz
+    rot[...,2,1] = cx*sy*sz + sx*cz
+    rot[...,2,2] = cx*cy
+
+    return rot
