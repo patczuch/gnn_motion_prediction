@@ -1,58 +1,110 @@
 import torch
-import torch.nn as nn
 from torch_geometric.nn import GATConv
+from torch_geometric.nn import global_max_pool
 
 
-def batch_edge_index(edge_index, num_nodes, batch_size):
-    edge_index_list = []
-    for i in range(batch_size):
-        edge_index_list.append(edge_index + i * num_nodes)
-    return torch.cat(edge_index_list, dim=1)
+class GATEncoder(torch.nn.Module):
+    def __init__(self, z_dim):
+        super(GATEncoder, self).__init__()
+
+        context_length = 10
+        rotation_dim = 9
+        input_dim = rotation_dim * context_length
+
+        hid_lyrs = [16, 16, 16]
+        heads_num = 16
+
+        e_Fs = [input_dim] + hid_lyrs + [z_dim]
+        self.convs = []
+        for i, (fi_prev, fi) in enumerate(zip(e_Fs[:-1], e_Fs[1:])):
+            if i != 0:
+                fi_prev *= heads_num
+            if i != len(e_Fs) - 2:
+                heads = heads_num
+            else:
+                heads = 1
+            self.convs.append(
+                GATConv(fi_prev, fi, heads=heads, add_self_loops=True, fill_value=0)
+            )
+        self.convs = torch.nn.ModuleList(self.convs)
+
+    def forward(self, src_graph):
+        x = src_graph.src_x
+        edge_index_bi = src_graph.edge_index_bidirection
+        batch_id = src_graph.batch
+
+        for i, conv in enumerate(self.convs):
+            x = conv(x, edge_index_bi)
+
+            if (i + 1) != len(self.convs):
+                x = torch.nn.ReLU()(x)
+
+        V_mask = src_graph.mask
+        if V_mask.sum() > 0:
+            pool_z_x = global_max_pool(x[~V_mask], batch_id[~V_mask])
+        else:
+            pool_z_x = global_max_pool(x, batch_id)
+
+        return pool_z_x
 
 
-class GATFrameEncoder(nn.Module):
-    def __init__(self, in_dim, hidden_dim):
+class GATDecoder(torch.nn.Module):
+    def __init__(self, z_dim):
         super().__init__()
-        self.gat1 = GATConv(in_dim, hidden_dim, heads=2)
-        self.gat2 = GATConv(hidden_dim*2, hidden_dim, heads=1, concat=False)
 
-    def forward(self, x, edge_index):
-        x = self.gat1(x, edge_index).relu()
-        x = self.gat2(x, edge_index)
-        return x  # shape: (num_joints, hidden_dim)
+        out_dim = 9
+
+        hid_lyrs = [16, 16, 16]
+        heads_num = 16
+        tgt_all_lyr = True
+
+        tgt_dim = 9
+        d_Fs = [z_dim + tgt_dim] + hid_lyrs + [out_dim]
+        self.deconvs = []
+
+        for i, (fi_prev, fi) in enumerate(zip(d_Fs[:-1], d_Fs[1:])):
+            heads = heads_num if i != len(d_Fs) - 2 else 1
+            in_dim = fi_prev
+            if i != 0:
+                in_dim *= heads_num
+
+            conv = GATConv(in_dim, fi, heads=heads, add_self_loops=True)
+            self.deconvs.append(conv)
+
+        self.deconvs = torch.nn.ModuleList(self.deconvs)
+        self.tgt_all_lyr = tgt_all_lyr
+
+    def forward(self, src_z, tgt_graph):
+        dec_x = src_z[tgt_graph.batch]
+        tgt_x = tgt_graph.tgt_x
+
+        edge_index_bi = tgt_graph.edge_index_bidirection
+        dec_x = torch.hstack((dec_x, tgt_x))
+
+        for i, conv in enumerate(self.deconvs):
+            dec_x = conv(dec_x, edge_index_bi)
+
+            if (i + 1) != len(self.deconvs):
+                dec_x = torch.nn.ReLU()(dec_x)
+
+        return dec_x
 
 
-class MotionPredictor(nn.Module):
-    def __init__(self, in_dim, hidden_dim, out_dim, num_joints):
-        super().__init__()
-        self.encoder = GATFrameEncoder(in_dim, hidden_dim)
+class Model(torch.nn.Module):
+    def __init__(self):
+        super(Model, self).__init__()
+        z_dim = 32
 
-        # GRU processes sequence of graph embeddings (one embedding per joint)
-        self.gru = nn.GRU(hidden_dim*num_joints, hidden_dim, batch_first=True)
+        self.encoder = GATEncoder(z_dim)
+        self.decoder = GATDecoder(z_dim)
 
-        # Decoder predicts next joint features
-        self.decoder = GATFrameEncoder(hidden_dim, out_dim)
+        self.z_dim = z_dim
 
-        self.num_joints = num_joints
-        self.hidden_dim = hidden_dim
+    def forward(self, src_graph, tgt_graph):
+        z = self.encoder(src_graph)
+        hatD = self.decoder(z, tgt_graph)
+        return z, hatD
 
-    def forward(self, seq, edge_index):
-        T = seq.shape[0]
-        num_joints = seq.shape[1]
-
-        # Flatten sequence for batch processing
-        x_batch = seq.reshape(T * num_joints, -1)
-        edge_index_batch = batch_edge_index(edge_index, num_joints, T)
-
-        # Encode all frames in one pass
-        enc = self.encoder(x_batch, edge_index_batch)  # (T*num_joints, hidden_dim)
-        enc_frames = enc.view(T, num_joints, -1)
-
-        # Flatten joints for GRU
-        enc_frames = enc_frames.reshape(1, T, -1)
-
-        _, h = self.gru(enc_frames)  # (1, 1, hidden_dim)
-
-        h = h.squeeze(0).unsqueeze(0).repeat(num_joints, 1)
-        out = self.decoder(h, edge_index)
-        return out
+    @property
+    def device(self):
+        return next(self.parameters()).device
