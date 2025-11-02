@@ -60,7 +60,7 @@ def matrix_to_euler_zyx(R):
 if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    checkpoint_path = "./checkpoints/model_20251102-143539.pth"
+    checkpoint_path = "./checkpoints/model_20251102-155319.pth"
     dataset_path = "datasets/lafan1eval"
     out_dir = "./eval_results"
     os.makedirs(out_dir, exist_ok=True)
