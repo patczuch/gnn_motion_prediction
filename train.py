@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     train_set, val_set = torch.utils.data.random_split(dataset, [train_size, val_size])
 
-    batch_size = 32
+    batch_size = 128
 
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True,
                           num_workers=4, pin_memory=True, persistent_workers=True)
@@ -37,11 +37,12 @@ if __name__ == "__main__":
         model.train()
         train_loss = 0.0
 
-        for src_graph, tgt_graph in train_loader:
+        for src_graph, lastframe_graph, tgt_graph in train_loader:
             src_graph = src_graph.to(device)
+            lastframe_graph = lastframe_graph.to(device)
             tgt_graph = tgt_graph.to(device)
 
-            _, pred = model(src_graph, tgt_graph)
+            pred = model(src_graph, lastframe_graph)
             gt = tgt_graph.x
 
             loss = loss_fn(pred, gt)
@@ -57,11 +58,12 @@ if __name__ == "__main__":
         model.eval()
         val_loss = 0.0
         with torch.no_grad():
-            for src_graph, tgt_graph in val_loader:
+            for src_graph, lastframe_graph, tgt_graph in val_loader:
                 src_graph = src_graph.to(device)
+                lastframe_graph = lastframe_graph.to(device)
                 tgt_graph = tgt_graph.to(device)
 
-                _, pred = model(src_graph, tgt_graph)
+                pred = model(src_graph, lastframe_graph)
                 gt = tgt_graph.x.to(device)
 
                 loss = loss_fn(pred, gt)

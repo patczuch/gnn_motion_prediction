@@ -80,14 +80,16 @@ class BVHMotionDataset(Dataset):
         H = self.context
 
         context = rot[start:start+H].reshape(H, J, 9).permute(1,0,2).reshape(J, H*9)
+        lastframe  = rot[start+H-1].reshape(J, 9)
         target  = rot[start+H].reshape(J, 9)
 
         batch = torch.zeros(J, dtype=torch.long)
 
         src_graph = Data(x=context, edge_index=self.edges, batch=batch)
+        lastframe_graph = Data(x=lastframe, edge_index=self.edges, batch=batch)
         tgt_graph = Data(x=target,  edge_index=self.edges, batch=batch)
 
-        return src_graph, tgt_graph
+        return src_graph, lastframe_graph, tgt_graph
 
 
 def euler_to_matrix_zyx(e):

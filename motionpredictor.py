@@ -94,10 +94,10 @@ class Model(torch.nn.Module):
 
         self.z_dim = z_dim
 
-    def forward(self, src_graph, tgt_graph):
+    def forward(self, src_graph, lastframe_graph):
         z = self.encoder(src_graph)
-        hatD = self.decoder(z, tgt_graph)
-        return z, hatD
+        hatD = self.decoder(z, lastframe_graph)
+        return hatD
 
     @property
     def device(self):

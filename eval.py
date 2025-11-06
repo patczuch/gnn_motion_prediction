@@ -87,9 +87,10 @@ if __name__ == "__main__":
 
     with torch.no_grad():
         for idx in test_indices:
-            src_graph, tgt_graph = dataset[idx]
+            src_graph, lastframe_graph, tgt_graph = dataset[idx]
 
             src_graph = src_graph.to(device)
+            lastframe_graph = lastframe_graph.to(device)
             tgt_graph = tgt_graph.to(device)
 
             J = src_graph.x.shape[0]
@@ -104,7 +105,7 @@ if __name__ == "__main__":
 
             for s in range(rollout):
                 src_graph.x = context_tensor.reshape(J, context * 9)
-                _, pred = model(src_graph, tgt_graph)
+                pred = model(src_graph, lastframe_graph)
 
                 pred_rot = pred.view(J, 3, 3)
 
