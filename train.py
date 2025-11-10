@@ -1,10 +1,13 @@
 import os
 import torch
 import time
-from torch import nn
+
 from torch_geometric.loader import DataLoader
+
+from geodesicloss import GeodesicLoss
 from motionpredictor import Model
 from dataset import BVHMotionDataset
+from rot_utils import sixd_to_matrix
 
 
 if __name__ == "__main__":
@@ -29,11 +32,11 @@ if __name__ == "__main__":
     model = Model().to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-    loss_fn = nn.MSELoss(reduction='sum')
+    loss_fn = GeodesicLoss(reduction='mean')
 
     print(f"Train size: {len(train_loader) * batch_size}, Validation size: {len(val_loader) * batch_size}")
 
-    for epoch in range(50):
+    for epoch in range(200):
         model.train()
         train_loss = 0.0
 
@@ -45,7 +48,7 @@ if __name__ == "__main__":
             pred = model(src_graph, lastframe_graph)
             gt = tgt_graph.x
 
-            loss = loss_fn(pred, gt)
+            loss = loss_fn(sixd_to_matrix(pred), sixd_to_matrix(gt))
 
             optimizer.zero_grad()
             loss.backward()
@@ -66,7 +69,7 @@ if __name__ == "__main__":
                 pred = model(src_graph, lastframe_graph)
                 gt = tgt_graph.x.to(device)
 
-                loss = loss_fn(pred, gt)
+                loss = loss_fn(sixd_to_matrix(pred), sixd_to_matrix(gt))
                 val_loss += loss.item()
 
         val_loss /= len(val_loader)

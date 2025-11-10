@@ -2,6 +2,7 @@ import os
 import torch
 from torch_geometric.data import Data, Dataset
 from bvh import Bvh
+from rot_utils import euler_to_sixd
 
 
 class BVHMotionDataset(Dataset):
@@ -46,8 +47,7 @@ class BVHMotionDataset(Dataset):
                                   for f in range(F)]
                         angles_deg[:,j,ci] = torch.tensor(values)
 
-                angles = angles_deg * 3.14159265359 / 180.0
-                rotmats = euler_to_matrix_zyx(angles)
+                rotmats = euler_to_sixd(angles_deg)
 
                 torch.save(rotmats, cache_path)
                 print("  wrote cached rotations")
@@ -79,9 +79,11 @@ class BVHMotionDataset(Dataset):
         J = rot.shape[1]
         H = self.context
 
-        context = rot[start:start+H].reshape(H, J, 9).permute(1,0,2).reshape(J, H*9)
-        lastframe  = rot[start+H-1].reshape(J, 9)
-        target  = rot[start+H].reshape(J, 9)
+        rotsize = 6
+        context = rot[start:start+H].reshape(H, J, rotsize).permute(1,0,2).reshape(J, H*rotsize)
+        target  = rot[start+H].reshape(J, rotsize)
+        lastframe  = rot[start+H-1].reshape(J, rotsize)
+        # lastframe = torch.zeros(target.shape)
 
         batch = torch.zeros(J, dtype=torch.long)
 
@@ -90,30 +92,3 @@ class BVHMotionDataset(Dataset):
         tgt_graph = Data(x=target,  edge_index=self.edges, batch=batch)
 
         return src_graph, lastframe_graph, tgt_graph
-
-
-def euler_to_matrix_zyx(e):
-    x = e[..., 0]
-    y = e[..., 1]
-    z = e[..., 2]
-
-    cx = torch.cos(x); sx = torch.sin(x)
-    cy = torch.cos(y); sy = torch.sin(y)
-    cz = torch.cos(z); sz = torch.sin(z)
-
-    out_shape = e.shape[:-1] + (3, 3)
-    R = torch.empty(out_shape, dtype=e.dtype, device=e.device)
-
-    R[..., 0, 0] = cy * cz
-    R[..., 0, 1] = sx * sy * cz - sz * cx
-    R[..., 0, 2] = sx * sz + sy * cx * cz
-
-    R[..., 1, 0] = sz * cy
-    R[..., 1, 1] = sx * sy * sz + cx * cz
-    R[..., 1, 2] = -sx * cz + sy * sz * cx
-
-    R[..., 2, 0] = -sy
-    R[..., 2, 1] = sx * cy
-    R[..., 2, 2] = cx * cy
-
-    return R

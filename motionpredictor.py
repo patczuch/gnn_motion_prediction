@@ -8,7 +8,7 @@ class GATEncoder(torch.nn.Module):
         super(GATEncoder, self).__init__()
 
         context_length = 10
-        rotation_dim = 9
+        rotation_dim = 6
         input_dim = rotation_dim * context_length
 
         hid_lyrs = [16, 16, 16]
@@ -46,13 +46,13 @@ class GATDecoder(torch.nn.Module):
     def __init__(self, z_dim):
         super().__init__()
 
-        out_dim = 9
+        out_dim = 6
 
         hid_lyrs = [16, 16, 16]
         heads_num = 16
         tgt_all_lyr = True
 
-        tgt_dim = 9
+        tgt_dim = 6
         d_Fs = [z_dim + tgt_dim] + hid_lyrs + [out_dim]
         self.deconvs = []
 
@@ -87,7 +87,7 @@ class GATDecoder(torch.nn.Module):
 class Model(torch.nn.Module):
     def __init__(self):
         super(Model, self).__init__()
-        z_dim = 32
+        z_dim = 48
 
         self.encoder = GATEncoder(z_dim)
         self.decoder = GATDecoder(z_dim)

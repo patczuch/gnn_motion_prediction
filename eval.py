@@ -1,66 +1,16 @@
 import os
 import random
 import torch
-from torch import nn
 from motionpredictor import Model
 from dataset import BVHMotionDataset
-
-
-def write_bvh(template_lines, rotations, out_path):
-    out = []
-    i = 0
-    while i < len(template_lines):
-        line = template_lines[i]
-        out.append(line)
-        if line.startswith("Frame Time"):
-            i += 1
-            break
-        i += 1
-
-    F, J, _, _ = rotations.shape
-
-    for f in range(F):
-        out.append("0.0 0.0 0.0 ")
-        e = matrix_to_euler_zyx(rotations[f])
-        e = torch.rad2deg(e)
-
-        frame_euler = []
-
-        for j in range(J):
-            x, y, z = e[j]
-            frame_euler.extend([z.item(), y.item(), x.item()])
-
-        out.append(" ".join(f"{v:.6f}" for v in frame_euler) + "\n")
-
-    with open(out_path, "w") as f:
-        f.writelines(out)
-
-
-
-def matrix_to_euler_zyx(R):
-    r20 = R[..., 2, 0]
-    cy = torch.sqrt(R[..., 0, 0]**2 + R[..., 1, 0]**2)
-
-    y = torch.asin(torch.clamp(-r20, -1.0, 1.0))
-
-    eps = 1e-6
-    x = torch.atan2(R[..., 2, 1], R[..., 2, 2])
-    z = torch.atan2(R[..., 1, 0], R[..., 0, 0])
-
-    mask = cy < eps
-    if mask.any():
-        x_alt = torch.atan2(-R[..., 0, 1], R[..., 1, 1])
-        x = torch.where(mask, x_alt, x)
-        z = torch.where(mask, torch.zeros_like(z), z)
-
-    e = torch.stack((x, y, z), dim=-1)
-    return e
-
+from rot_utils import sixd_to_matrix, sixd_to_euler, euler_to_sixd
+from bvh_utils import write_bvh
+from geodesicloss import GeodesicLoss
 
 if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    checkpoint_path = "./checkpoints/model_20251106-192734.pth"
+    checkpoint_path = "./checkpoints/model_20251110-161657.pth"
     dataset_path = "datasets/lafan1eval"
     out_dir = "./eval_results"
     os.makedirs(out_dir, exist_ok=True)
@@ -76,14 +26,14 @@ if __name__ == "__main__":
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     model.eval()
 
-    loss_fn = nn.MSELoss(reduction='sum')
+    loss_fn = GeodesicLoss(reduction='mean')
 
     print(f"Loaded dataset with {len(dataset)} samples")
     print(f"Testing model: {checkpoint_path}")
     print(f"Rollout steps: {rollout}")
 
     test_indices = random.sample(range(len(dataset)), num_samples)
-    all_mse_scores = []
+    all_losses = []
 
     with torch.no_grad():
         for idx in test_indices:
@@ -91,42 +41,36 @@ if __name__ == "__main__":
 
             src_graph = src_graph.to(device)
             lastframe_graph = lastframe_graph.to(device)
-            tgt_graph = tgt_graph.to(device)
 
             J = src_graph.x.shape[0]
-            context_tensor = src_graph.x.view(J, context, 9)
+            context_tensor = src_graph.x.view(J, context, 6)
 
             filepath, start = dataset.samples[idx]
             rot = dataset.cache[filepath]
 
             gen_frames = [rot[start + f] for f in range(context)]
 
-            mse_scores = []
+            losses = []
 
             for s in range(rollout):
-                src_graph.x = context_tensor.reshape(J, context * 9)
+                src_graph.x = context_tensor.reshape(J, context * 6).to(device)
                 pred = model(src_graph, lastframe_graph)
+                pred = euler_to_sixd(sixd_to_euler(pred))
+                gen_frames.append(pred.cpu())
 
-                pred_rot = pred.view(J, 3, 3)
+                gt = rot[start + context + s]
 
-                gen_frames.append(pred_rot.cpu())
+                loss = loss_fn(sixd_to_matrix(pred).cpu(), sixd_to_matrix(gt).cpu()).item()
+                losses.append(loss)
+                print(f"Sample {idx} frame {s} | Loss = {loss:.6f}")
 
-                gt_rot = rot[start + context + s]
-                tgt_graph.x = gt_rot.reshape(J, 9).to(device)
+                context_tensor = torch.cat([context_tensor[:, 1:, :], pred.view(J, 1, 6).detach().to(context_tensor.device)], dim=1)
+                lastframe_graph.x = pred.to(device)
 
-                mse = loss_fn(pred_rot.cpu(), gt_rot.cpu()).item()
-                mse_scores.append(mse)
-                print(f"Sample {idx} frame {s} | MSE = {mse:.6f}")
-
-                pred_frame_flat = pred.view(J, 1, 9)
-                context_tensor = torch.cat([context_tensor[:,1:,:],
-                                            pred_frame_flat], dim=1)
-
-            avg_mse = sum(mse_scores) / len(mse_scores)
-            all_mse_scores.append(avg_mse)
+            avg_loss = sum(losses) / len(losses)
+            all_losses.append(avg_loss)
 
             gen_frames = torch.stack(gen_frames)
-
             gt_frames = rot[start:start+context+rollout]
 
             with open(filepath, "r") as f:
@@ -141,9 +85,9 @@ if __name__ == "__main__":
             print(f"Exported sample {idx} →")
             print(f"  Generated:   {out_gen}")
             print(f"  GroundTruth: {out_gt}")
-            print(f"  Average rollout MSE = {avg_mse:.6f}")
+            print(f"  Average rollout loss = {avg_loss:.6f}")
             print("")
 
     print("-------------------------------------------------")
-    print(f"Overall Mean MSE over {num_samples} samples: {sum(all_mse_scores) / len(all_mse_scores):.6f}")
+    print(f"Overall Mean loss over {num_samples} samples: {sum(all_losses) / len(all_losses):.6f}")
     print("Done!")
