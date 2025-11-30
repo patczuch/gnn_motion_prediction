@@ -14,7 +14,7 @@ if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     context = 20
 
-    dataset = BVHMotionDataset("./datasets/lafan1train_small", context=context, step=context)
+    dataset = BVHMotionDataset("./datasets/lafan1train", context=context, step=context)
 
     val_ratio = 0.2
     total = len(dataset)
@@ -25,23 +25,46 @@ if __name__ == "__main__":
 
     batch_size = 128
 
-    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True,
-                          num_workers=4, pin_memory=True, persistent_workers=True)
-    val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False,
-                          num_workers=4, pin_memory=True, persistent_workers=True)
+    train_loader = DataLoader(
+        train_set,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=4,
+        pin_memory=True,
+        persistent_workers=True,
+    )
+    val_loader = DataLoader(
+        val_set,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=4,
+        pin_memory=True,
+        persistent_workers=True,
+    )
 
     model = Model().to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-    loss_fn = GeodesicLoss(reduction='mean')
+    rot_loss_fn = GeodesicLoss(reduction="mean")
+    pos_loss_fn = torch.nn.MSELoss(reduction="mean")
 
-    print(f"Train size: {len(train_loader) * batch_size}, Validation size: {len(val_loader) * batch_size}")
+    print(
+        f"Train size: {len(train_loader) * batch_size}, "
+        f"Validation size: {len(val_loader) * batch_size}"
+    )
+
     rotation_dim = 6
-    rollout = 5
+    position_dim = 3
+    feature_dim = rotation_dim + position_dim
 
-    for epoch in range(5):
+    rollout = 5
+    pos_weight = 0.03
+
+    for epoch in range(200):
         model.train()
         train_loss = 0.0
+        train_rot_loss = 0.0
+        train_pos_loss = 0.0
 
         for src_graph, lastframe_graph, tgt_graph in train_loader:
             src_graph = src_graph.to(device)
@@ -49,32 +72,63 @@ if __name__ == "__main__":
             tgt_graph = tgt_graph.to(device)
 
             J = src_graph.x.shape[0]
-            context_tensor = src_graph.x.view(J, context, rotation_dim)
+            context_frames = src_graph.x.view(J, context, feature_dim)
 
-            losses = []
+            step_rot_losses = []
+            step_pos_losses = []
+
             for step in range(rollout):
-                src_graph.x = context_tensor.reshape(J, context * rotation_dim).to(device)
-                pred = model(src_graph, lastframe_graph)
+                src_graph.x = context_frames.reshape(J, context * feature_dim).to(device)
+                pred = model(src_graph, lastframe_graph)  # (J, feature_dim)
 
-                gt = tgt_graph.x[:, step * rotation_dim:(step + 1) * rotation_dim]
+                pred_rot6 = pred[:, :rotation_dim]
+                pred_pos3 = pred[:, rotation_dim:rotation_dim + position_dim]
 
-                loss = loss_fn(sixd_torch.to_matrix(pred.reshape(-1, 3, 2)),
-                               sixd_torch.to_matrix(gt.reshape(-1, 3, 2)))
-                losses.append(loss)
+                pred_mat = sixd_torch.to_matrix(pred_rot6.view(-1, 3, 2))  # (J, 3, 3)
+                pred_6d_norm = pred_mat[..., :3, :2].reshape(J, rotation_dim)
 
-                context_tensor = (
-                    torch.cat([context_tensor[:, 1:, :], pred.view(J, 1, rotation_dim).detach()], dim=1))
-                lastframe_graph.x = pred.to(device)
+                gt_step = tgt_graph.x[
+                    :, step * feature_dim : (step + 1) * feature_dim
+                ]  # (J, 9)
 
-            total_loss = sum(losses) / len(losses)
+                gt_rot6 = gt_step[:, :rotation_dim]
+                gt_pos3 = gt_step[:, rotation_dim:rotation_dim + position_dim]
+
+                rot_loss = rot_loss_fn(
+                    pred_mat,
+                    sixd_torch.to_matrix(gt_rot6.view(-1, 3, 2)),
+                )
+                pos_loss = pos_loss_fn(pred_pos3, gt_pos3)
+
+                step_rot_losses.append(rot_loss)
+                step_pos_losses.append(pos_loss)
+
+                pred_feat_next = torch.cat([pred_6d_norm, pred_pos3], dim=-1)  # (J, 9)
+
+                context_frames = torch.cat(
+                    [
+                        context_frames[:, 1:, :],
+                        pred_feat_next.view(J, 1, feature_dim).detach(),
+                    ],
+                    dim=1,
+                )
+                lastframe_graph.x = pred_feat_next.to(device)
+
+            avg_rot_loss = sum(step_rot_losses) / len(step_rot_losses)
+            avg_pos_loss = sum(step_pos_losses) / len(step_pos_losses)
+            loss = avg_rot_loss + pos_weight * avg_pos_loss
 
             optimizer.zero_grad()
-            total_loss.backward()
+            loss.backward()
             optimizer.step()
 
-            train_loss += total_loss.item()
+            train_loss += loss.item()
+            train_rot_loss += avg_rot_loss.detach()
+            train_pos_loss += (pos_weight * avg_pos_loss).detach()
 
         train_loss /= len(train_loader)
+        train_rot_loss /= len(train_loader)
+        train_pos_loss /= len(train_loader)
 
         model.eval()
         val_loss = 0.0
@@ -85,26 +139,66 @@ if __name__ == "__main__":
                 tgt_graph = tgt_graph.to(device)
 
                 J = src_graph.x.shape[0]
-                context_tensor = src_graph.x.view(J, context, rotation_dim)
+                context_frames = src_graph.x.view(J, context, feature_dim)
 
-                losses = []
+                step_rot_losses = []
+                step_pos_losses = []
+
                 for step in range(rollout):
-                    src_graph.x = context_tensor.reshape(J, context * rotation_dim).to(device)
-                    pred = model(src_graph, lastframe_graph)
-                    gt = tgt_graph.x[:, step * rotation_dim:(step + 1) * rotation_dim]
+                    src_graph.x = context_frames.reshape(J, context * feature_dim).to(device)
+                    pred = model(src_graph, lastframe_graph)  # (J, feature_dim)
 
-                    loss = loss_fn(sixd_torch.to_matrix(pred.reshape(-1, 3, 2)),
-                                   sixd_torch.to_matrix(gt.reshape(-1, 3, 2)))
-                    losses.append(loss)
+                    pred_rot6 = pred[:, :rotation_dim]
+                    pred_pos3 = pred[:, rotation_dim:rotation_dim + position_dim]
 
-                    context_tensor = torch.cat([context_tensor[:, 1:, :], pred.view(J, 1, rotation_dim).detach()], dim=1)
-                    lastframe_graph.x = pred.to(device)
+                    pred_mat = sixd_torch.to_matrix(pred_rot6.view(-1, 3, 2))
+                    pred_6d_norm = pred_mat[..., :3, :2].reshape(J, rotation_dim)
 
-                val_loss += (sum(losses) / len(losses)).item()
+                    gt_step = tgt_graph.x[
+                        :, step * feature_dim : (step + 1) * feature_dim
+                    ]
+                    gt_rot6 = gt_step[:, :rotation_dim]
+                    gt_pos3 = gt_step[:, rotation_dim:rotation_dim + position_dim]
+
+                    rot_loss = rot_loss_fn(
+                        pred_mat,
+                        sixd_torch.to_matrix(gt_rot6.view(-1, 3, 2)),
+                    )
+                    pos_loss = pos_loss_fn(pred_pos3, gt_pos3)
+
+                    step_rot_losses.append(rot_loss)
+                    step_pos_losses.append(pos_loss)
+
+                    pred_feat_next = torch.cat(
+                        [pred_6d_norm, pred_pos3], dim=-1
+                    )  # (J, 9)
+
+                    context_frames = torch.cat(
+                        [
+                            context_frames[:, 1:, :],
+                            pred_feat_next.view(J, 1, feature_dim),
+                        ],
+                        dim=1,
+                    )
+                    lastframe_graph.x = pred_feat_next.to(device)
+
+                avg_rot_loss = sum(step_rot_losses) / len(step_rot_losses)
+                avg_pos_loss = sum(step_pos_losses) / len(step_pos_losses)
+                loss = avg_rot_loss + pos_weight * avg_pos_loss
+
+                val_loss += loss.item()
 
         val_loss /= len(val_loader)
-        print(f"Epoch {epoch + 1:03d} | Train Loss: {train_loss:.6f} | Val Loss: {val_loss:.6f}")
+        print(
+            f"Epoch {epoch + 1:03d} | "
+            f"Train Loss: {train_loss:.6f} "
+            f"(rot: {train_rot_loss:.6f}, pos: {train_pos_loss:.6f}) | "
+            f"Val Loss: {val_loss:.6f}"
+        )
 
     save_dir = "./checkpoints"
     os.makedirs(save_dir, exist_ok=True)
-    torch.save(model.state_dict(), os.path.join(save_dir, "model_" + time.strftime("%Y%m%d-%H%M%S") + ".pth"))
+    torch.save(
+        model.state_dict(),
+        os.path.join(save_dir, "model_" + time.strftime("%Y%m%d-%H%M%S") + ".pth"),
+    )
