@@ -22,4 +22,4 @@ def delete_files_with_extension(root_folder, extension):
 
 
 if __name__ == "__main__":
-    delete_files_with_extension("./datasets", ".bvh.rot.pt")
+    delete_files_with_extension("./datasets", ".bvh.feat.pt")

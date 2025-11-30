@@ -9,10 +9,11 @@ class GATEncoder(torch.nn.Module):
 
         context_length = 20
         rotation_dim = 6
-        input_dim = rotation_dim * context_length
+        position_dim = 3
+        input_dim = (rotation_dim + position_dim) * context_length
 
-        hid_lyrs = [16, 16, 16]
-        heads_num = 16
+        hid_lyrs = [24, 24, 24]
+        heads_num = 32
 
         e_Fs = [input_dim] + hid_lyrs + [z_dim]
         self.convs = []
@@ -46,13 +47,15 @@ class GATDecoder(torch.nn.Module):
     def __init__(self, z_dim):
         super().__init__()
 
-        out_dim = 6
+        rotation_dim = 6
+        position_dim = 3
+        out_dim = rotation_dim + position_dim
 
-        hid_lyrs = [16, 16, 16]
-        heads_num = 16
+        hid_lyrs = [24, 24, 24]
+        heads_num = 32
         tgt_all_lyr = True
 
-        tgt_dim = 6
+        tgt_dim = rotation_dim + position_dim
         d_Fs = [z_dim + tgt_dim] + hid_lyrs + [out_dim]
         self.deconvs = []
 
@@ -87,7 +90,7 @@ class GATDecoder(torch.nn.Module):
 class Model(torch.nn.Module):
     def __init__(self):
         super(Model, self).__init__()
-        z_dim = 48
+        z_dim = 72
 
         self.encoder = GATEncoder(z_dim)
         self.decoder = GATDecoder(z_dim)

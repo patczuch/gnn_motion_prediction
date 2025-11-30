@@ -26,32 +26,57 @@ if __name__ == "__main__":
     batch_size = 128
 
     train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True,
-                          num_workers=4, pin_memory=True, persistent_workers=True)
+                              num_workers=4, pin_memory=True, persistent_workers=True)
     val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False,
-                          num_workers=4, pin_memory=True, persistent_workers=True)
+                            num_workers=4, pin_memory=True, persistent_workers=True)
 
     model = Model().to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-    loss_fn = GeodesicLoss(reduction='mean')
+    rot_loss_fn = GeodesicLoss(reduction='mean')
+    pos_loss_fn = torch.nn.MSELoss(reduction='mean')
 
     print(f"Train size: {len(train_loader) * batch_size}, Validation size: {len(val_loader) * batch_size}")
+
     rotation_dim = 6
+    position_dim = 3
+    feature_dim = rotation_dim + position_dim
+
+    pos_weight = 0.03
 
     for epoch in range(200):
         model.train()
         train_loss = 0.0
+        train_rot_loss = 0.0
+        train_pos_loss = 0.0
 
         for src_graph, lastframe_graph, tgt_graph in train_loader:
             src_graph = src_graph.to(device)
             lastframe_graph = lastframe_graph.to(device)
             tgt_graph = tgt_graph.to(device)
 
-            pred = model(src_graph, lastframe_graph)
-            gt = tgt_graph.x[:, :rotation_dim]
+            pred = model(src_graph, lastframe_graph)  # (J, feature_dim)
 
-            loss = loss_fn(sixd_torch.to_matrix(pred.reshape(-1, 3, 2)),
-                           sixd_torch.to_matrix(gt.reshape(-1, 3, 2)))
+            gt_frame0 = tgt_graph.x[:, :feature_dim]
+
+            pred_rot6 = pred[:, :rotation_dim]
+            pred_pos3 = pred[:, rotation_dim:rotation_dim + position_dim]
+
+            gt_rot6 = gt_frame0[:, :rotation_dim]
+            gt_pos3 = gt_frame0[:, rotation_dim:rotation_dim + position_dim]
+
+            rot_loss = rot_loss_fn(
+                sixd_torch.to_matrix(pred_rot6.reshape(-1, 3, 2)),
+                sixd_torch.to_matrix(gt_rot6.reshape(-1, 3, 2))
+            )
+
+            train_rot_loss += rot_loss
+
+            pos_loss = pos_loss_fn(pred_pos3, gt_pos3)
+
+            train_pos_loss += pos_weight * pos_loss
+
+            loss = rot_loss + pos_weight * pos_loss
 
             optimizer.zero_grad()
             loss.backward()
@@ -60,6 +85,8 @@ if __name__ == "__main__":
             train_loss += loss.item()
 
         train_loss /= len(train_loader)
+        train_rot_loss /= len(train_loader)
+        train_pos_loss /= len(train_loader)
 
         model.eval()
         val_loss = 0.0
@@ -69,16 +96,26 @@ if __name__ == "__main__":
                 lastframe_graph = lastframe_graph.to(device)
                 tgt_graph = tgt_graph.to(device)
 
-                pred = model(src_graph, lastframe_graph)
+                pred = model(src_graph, lastframe_graph)  # (J, feature_dim)
+                gt_frame0 = tgt_graph.x[:, :feature_dim]
 
-                gt = tgt_graph.x[:, :rotation_dim]
+                pred_rot6 = pred[:, :rotation_dim]
+                pred_pos3 = pred[:, rotation_dim:rotation_dim + position_dim]
 
-                loss = loss_fn(sixd_torch.to_matrix(pred.reshape(-1, 3, 2)),
-                               sixd_torch.to_matrix(gt.reshape(-1, 3, 2)))
+                gt_rot6 = gt_frame0[:, :rotation_dim]
+                gt_pos3 = gt_frame0[:, rotation_dim:rotation_dim + position_dim]
+
+                rot_loss = rot_loss_fn(
+                    sixd_torch.to_matrix(pred_rot6.reshape(-1, 3, 2)),
+                    sixd_torch.to_matrix(gt_rot6.reshape(-1, 3, 2))
+                )
+                pos_loss = pos_loss_fn(pred_pos3, gt_pos3)
+
+                loss = rot_loss + pos_weight * pos_loss
                 val_loss += loss.item()
 
         val_loss /= len(val_loader)
-        print(f"Epoch {epoch + 1:03d} | Train Loss: {train_loss:.6f} | Val Loss: {val_loss:.6f}")
+        print(f"Epoch {epoch + 1:03d} | Train Loss: {train_loss:.6f} (rot: {train_rot_loss:.6f}, pos: {train_pos_loss:.6f}) | Val Loss: {val_loss:.6f}")
 
     save_dir = "./checkpoints"
     os.makedirs(save_dir, exist_ok=True)
