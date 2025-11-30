@@ -14,7 +14,7 @@ if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     context = 20
 
-    dataset = BVHMotionDataset("./datasets/lafan1train", context=context, step=context)
+    dataset = BVHMotionDataset("./datasets/lafan1train_small", context=context, step=context)
 
     val_ratio = 0.2
     total = len(dataset)
@@ -37,8 +37,9 @@ if __name__ == "__main__":
 
     print(f"Train size: {len(train_loader) * batch_size}, Validation size: {len(val_loader) * batch_size}")
     rotation_dim = 6
+    rollout = 5
 
-    for epoch in range(200):
+    for epoch in range(5):
         model.train()
         train_loss = 0.0
 
@@ -47,17 +48,31 @@ if __name__ == "__main__":
             lastframe_graph = lastframe_graph.to(device)
             tgt_graph = tgt_graph.to(device)
 
-            pred = model(src_graph, lastframe_graph)
-            gt = tgt_graph.x[:, :rotation_dim]
+            J = src_graph.x.shape[0]
+            context_tensor = src_graph.x.view(J, context, rotation_dim)
 
-            loss = loss_fn(sixd_torch.to_matrix(pred.reshape(-1, 3, 2)),
-                           sixd_torch.to_matrix(gt.reshape(-1, 3, 2)))
+            losses = []
+            for step in range(rollout):
+                src_graph.x = context_tensor.reshape(J, context * rotation_dim).to(device)
+                pred = model(src_graph, lastframe_graph)
+
+                gt = tgt_graph.x[:, step * rotation_dim:(step + 1) * rotation_dim]
+
+                loss = loss_fn(sixd_torch.to_matrix(pred.reshape(-1, 3, 2)),
+                               sixd_torch.to_matrix(gt.reshape(-1, 3, 2)))
+                losses.append(loss)
+
+                context_tensor = (
+                    torch.cat([context_tensor[:, 1:, :], pred.view(J, 1, rotation_dim).detach()], dim=1))
+                lastframe_graph.x = pred.to(device)
+
+            total_loss = sum(losses) / len(losses)
 
             optimizer.zero_grad()
-            loss.backward()
+            total_loss.backward()
             optimizer.step()
 
-            train_loss += loss.item()
+            train_loss += total_loss.item()
 
         train_loss /= len(train_loader)
 
@@ -69,13 +84,23 @@ if __name__ == "__main__":
                 lastframe_graph = lastframe_graph.to(device)
                 tgt_graph = tgt_graph.to(device)
 
-                pred = model(src_graph, lastframe_graph)
+                J = src_graph.x.shape[0]
+                context_tensor = src_graph.x.view(J, context, rotation_dim)
 
-                gt = tgt_graph.x[:, :rotation_dim]
+                losses = []
+                for step in range(rollout):
+                    src_graph.x = context_tensor.reshape(J, context * rotation_dim).to(device)
+                    pred = model(src_graph, lastframe_graph)
+                    gt = tgt_graph.x[:, step * rotation_dim:(step + 1) * rotation_dim]
 
-                loss = loss_fn(sixd_torch.to_matrix(pred.reshape(-1, 3, 2)),
-                               sixd_torch.to_matrix(gt.reshape(-1, 3, 2)))
-                val_loss += loss.item()
+                    loss = loss_fn(sixd_torch.to_matrix(pred.reshape(-1, 3, 2)),
+                                   sixd_torch.to_matrix(gt.reshape(-1, 3, 2)))
+                    losses.append(loss)
+
+                    context_tensor = torch.cat([context_tensor[:, 1:, :], pred.view(J, 1, rotation_dim).detach()], dim=1)
+                    lastframe_graph.x = pred.to(device)
+
+                val_loss += (sum(losses) / len(losses)).item()
 
         val_loss /= len(val_loader)
         print(f"Epoch {epoch + 1:03d} | Train Loss: {train_loss:.6f} | Val Loss: {val_loss:.6f}")

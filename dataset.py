@@ -1,8 +1,9 @@
 import os
 import torch
 from torch_geometric.data import Data, Dataset
-from bvh import Bvh
-from rot_utils import euler_to_sixd
+from pymotion.io.bvh import BVH
+from pymotion.ops.skeleton import fk
+import pymotion.rotations.ortho6d as sixd
 
 
 class BVHMotionDataset(Dataset):
@@ -25,49 +26,36 @@ class BVHMotionDataset(Dataset):
             filepath = os.path.join(directory, fname)
             cache_path = filepath + ".rot.pt"
 
-            with open(filepath) as f:
-                mocap = Bvh(f.read())
+            bvh = BVH()
+            bvh.load(filepath)
 
-            if not hasattr(self, "joint_names"):
-                self.joint_names = mocap.get_joints_names()
-                self.edges = self._build_edges(mocap)
+            rotations_quat, local_positions, parents, offsets, end_sites, end_sites_parents = bvh.get_data()
 
-            J = len(self.joint_names)
-            F = mocap.nframes
-
-            angles_deg = torch.zeros(F, J, 3)
+            if not hasattr(self, "names"):
+                self.offsets = offsets
+                self.parents = parents
+                self.end_sites = end_sites
+                self.end_sites_parents = end_sites_parents
+                self.names = bvh.data["names"]
+                self.rot_order = bvh.data["rot_order"]
+                self.frame_time = bvh.data["frame_time"]
+                self.edges = torch.tensor([(parents[i], i) for i in range(1, len(parents))]).t().long()
 
             if os.path.exists(cache_path):
                 rotmats = torch.load(cache_path)
                 print("  loaded precomputed rotations")
             else:
-                for j, name in enumerate(self.joint_names):
-                    for ci, ch in enumerate(["Xrotation","Yrotation","Zrotation"]):
-                        values = [mocap.frame_joint_channel(f, name, ch)
-                                  for f in range(F)]
-                        angles_deg[:,j,ci] = torch.tensor(values)
-
-                rotmats = euler_to_sixd(angles_deg)
-
+                rotmats = torch.from_numpy(sixd.from_quat(rotations_quat)).float()
                 torch.save(rotmats, cache_path)
                 print("  wrote cached rotations")
 
             self.cache[filepath] = rotmats
             F = rotmats.shape[0]
 
-            for start in range(0, F - self.total_frames, self.step):
+            for start in range(0, F - (self.context + self.context), self.step):
                 self.samples.append((filepath, start))
 
         print(f"Dataset ready: {len(self.samples)} samples")
-
-    def _build_edges(self, mocap):
-        edges = []
-        for j, name in enumerate(mocap.get_joints_names()):
-            p = mocap.joint_parent_index(name)
-            if p != -1:
-                edges.append((p, j))
-                edges.append((j, p))
-        return torch.tensor(edges).t().contiguous()
 
     def __len__(self):
         return len(self.samples)
@@ -78,17 +66,25 @@ class BVHMotionDataset(Dataset):
 
         J = rot.shape[1]
         H = self.context
-
         rotsize = 6
-        context = rot[start:start+H].reshape(H, J, rotsize).permute(1,0,2).reshape(J, H*rotsize)
-        target  = rot[start+H].reshape(J, rotsize)
-        lastframe  = rot[start+H-1].reshape(J, rotsize)
-        # lastframe = torch.zeros(target.shape)
+
+        # deltas = context_frames.clone()
+        # deltas[1:] = context_frames[1:] - context_frames[:-1]
+        # deltas[0] = 0
+        #
+        # context = deltas.reshape(H, J, rotsize).permute(1, 0, 2).reshape(J, H * rotsize)
+
+        context = rot[start:start + H].reshape(H, J, rotsize).permute(1, 0, 2).reshape(J, H * rotsize)
+
+        # target = rot[start + H].reshape(J, rotsize)
+        target = rot[start + H:start + H + H].reshape(H, J, rotsize).permute(1, 0, 2) .reshape(J, H * rotsize)
+
+        lastframe = rot[start + H - 1].reshape(J, rotsize)
 
         batch = torch.zeros(J, dtype=torch.long)
 
         src_graph = Data(x=context, edge_index=self.edges, batch=batch)
         lastframe_graph = Data(x=lastframe, edge_index=self.edges, batch=batch)
-        tgt_graph = Data(x=target,  edge_index=self.edges, batch=batch)
+        tgt_graph = Data(x=target, edge_index=self.edges, batch=batch)
 
         return src_graph, lastframe_graph, tgt_graph

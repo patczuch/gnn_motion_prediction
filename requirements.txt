@@ -1,4 +1,4 @@
 torch==2.9.0
 torch_geometric==2.7.0
-bvh==0.3
+upc-pymotion==0.2.3
 scipy==1.16.2

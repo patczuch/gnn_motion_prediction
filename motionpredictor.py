@@ -7,7 +7,7 @@ class GATEncoder(torch.nn.Module):
     def __init__(self, z_dim):
         super(GATEncoder, self).__init__()
 
-        context_length = 10
+        context_length = 20
         rotation_dim = 6
         input_dim = rotation_dim * context_length
 
@@ -37,7 +37,7 @@ class GATEncoder(torch.nn.Module):
             x = conv(x, edge_index)
 
             if (i + 1) != len(self.convs):
-                x = torch.nn.ReLU()(x)
+                x = torch.nn.LeakyReLU()(x)
 
         return global_max_pool(x, batch_id)
 
@@ -79,7 +79,7 @@ class GATDecoder(torch.nn.Module):
             dec_x = conv(dec_x, edge_index)
 
             if (i + 1) != len(self.deconvs):
-                dec_x = torch.nn.ReLU()(dec_x)
+                dec_x = torch.nn.LeakyReLU()(dec_x)
 
         return dec_x
 
