@@ -49,13 +49,15 @@ class GATDecoder(torch.nn.Module):
 
         rotation_dim = 6
         position_dim = 3
-        out_dim = rotation_dim + position_dim
+        gen_frames = 5
+        out_dim = (rotation_dim + position_dim) * gen_frames
 
         hid_lyrs = [24, 24, 24]
         heads_num = 32
         tgt_all_lyr = True
 
         tgt_dim = rotation_dim + position_dim
+
         d_Fs = [z_dim + tgt_dim] + hid_lyrs + [out_dim]
         self.deconvs = []
 

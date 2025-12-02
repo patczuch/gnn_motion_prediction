@@ -14,7 +14,7 @@ import pymotion.rotations.quat as quat
 if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    checkpoint_path = "./checkpoints/model_20251130-173252.pth"
+    checkpoint_path = "./checkpoints/model_20251202-155545.pth"
     dataset_path = "datasets/lafan1eval"
     out_dir = "./eval_results"
     os.makedirs(out_dir, exist_ok=True)
@@ -68,22 +68,24 @@ if __name__ == "__main__":
                 for f in range(context)
             ]
 
-            for step in range(rollout):
-                src_graph.x = context_frames.reshape(J, context * feature_dim).to(device)
-                pred = model(src_graph, lastframe_graph)  # (J, feature_dim)
+            src_graph.x = context_frames.reshape(J, context * feature_dim).to(device)
+            pred = model(src_graph, lastframe_graph)  # (J, rollout * feature_dim)
 
-                pred_rot6 = pred[:, :rotation_dim]
-                pred_pos3 = pred[:, rotation_dim:rotation_dim + position_dim]
+            pred_seq = pred.view(J, rollout, feature_dim)  # (J, rollout, 9)
+            gt_seq = tgt_graph.x[:, :rollout * feature_dim].view(J, rollout, feature_dim)
+
+            for step in range(rollout):
+                pred_step = pred_seq[:, step, :]  # (J, 9)
+
+                pred_rot6 = pred_step[:, :rotation_dim]
+                pred_pos3 = pred_step[:, rotation_dim:rotation_dim + position_dim]
 
                 pred_mat = sixd_torch.to_matrix(pred_rot6.view(-1, 3, 2))  # (J, 3, 3)
                 pred_6d_norm = pred_mat[..., :3, :2].reshape(J, rotation_dim)
 
                 bvh_rots.append(pred_6d_norm.cpu())
 
-                gt_step = tgt_graph.x[
-                    :, step * feature_dim : (step + 1) * feature_dim
-                ]  # (J, 9)
-
+                gt_step = gt_seq[:, step, :]  # (J, 9)
                 gt_rot6 = gt_step[:, :rotation_dim]
                 gt_pos3 = gt_step[:, rotation_dim:rotation_dim + position_dim]
 
@@ -101,17 +103,6 @@ if __name__ == "__main__":
                     f"rot_loss = {rot_loss:.6f} | pos_loss = {pos_loss:.6f} | "
                     f"total = {loss:.6f}"
                 )
-
-                pred_feat_next = torch.cat(
-                    [pred_6d_norm, pred_pos3], dim=-1
-                )  # (J, 9)
-
-                context_frames = torch.cat(
-                    [context_frames[:, 1:, :],
-                     pred_feat_next.view(J, 1, feature_dim).detach()],
-                    dim=1,
-                )
-                lastframe_graph.x = pred_feat_next.to(device)
 
             avg_loss = sum(losses) / len(losses)
             all_losses.append(avg_loss)

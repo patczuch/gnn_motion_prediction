@@ -41,6 +41,7 @@ if __name__ == "__main__":
     rotation_dim = 6
     position_dim = 3
     feature_dim = rotation_dim + position_dim
+    gen_frames = 5
 
     pos_weight = 0.03
 
@@ -55,15 +56,18 @@ if __name__ == "__main__":
             lastframe_graph = lastframe_graph.to(device)
             tgt_graph = tgt_graph.to(device)
 
-            pred = model(src_graph, lastframe_graph)  # (J, feature_dim)
+            pred = model(src_graph, lastframe_graph)
 
-            gt_frame0 = tgt_graph.x[:, :feature_dim]
+            gt_seq_flat = tgt_graph.x[:, :gen_frames * feature_dim]  # (J, gen_frames * feature_dim)
 
-            pred_rot6 = pred[:, :rotation_dim]
-            pred_pos3 = pred[:, rotation_dim:rotation_dim + position_dim]
+            pred_seq = pred.view(-1, gen_frames, feature_dim)
+            gt_seq = gt_seq_flat.view(-1, gen_frames, feature_dim)
 
-            gt_rot6 = gt_frame0[:, :rotation_dim]
-            gt_pos3 = gt_frame0[:, rotation_dim:rotation_dim + position_dim]
+            pred_rot6 = pred_seq[..., :rotation_dim].reshape(-1, rotation_dim)
+            gt_rot6 = gt_seq[..., :rotation_dim].reshape(-1, rotation_dim)
+
+            pred_pos3 = pred_seq[..., rotation_dim:rotation_dim + position_dim].reshape(-1, position_dim)
+            gt_pos3 = gt_seq[..., rotation_dim:rotation_dim + position_dim].reshape(-1, position_dim)
 
             rot_loss = rot_loss_fn(
                 sixd_torch.to_matrix(pred_rot6.reshape(-1, 3, 2)),
@@ -96,14 +100,18 @@ if __name__ == "__main__":
                 lastframe_graph = lastframe_graph.to(device)
                 tgt_graph = tgt_graph.to(device)
 
-                pred = model(src_graph, lastframe_graph)  # (J, feature_dim)
-                gt_frame0 = tgt_graph.x[:, :feature_dim]
+                pred = model(src_graph, lastframe_graph)
 
-                pred_rot6 = pred[:, :rotation_dim]
-                pred_pos3 = pred[:, rotation_dim:rotation_dim + position_dim]
+                gt_seq_flat = tgt_graph.x[:, :gen_frames * feature_dim]
 
-                gt_rot6 = gt_frame0[:, :rotation_dim]
-                gt_pos3 = gt_frame0[:, rotation_dim:rotation_dim + position_dim]
+                pred_seq = pred.view(-1, gen_frames, feature_dim)
+                gt_seq = gt_seq_flat.view(-1, gen_frames, feature_dim)
+
+                pred_rot6 = pred_seq[..., :rotation_dim].reshape(-1, rotation_dim)
+                gt_rot6 = gt_seq[..., :rotation_dim].reshape(-1, rotation_dim)
+
+                pred_pos3 = pred_seq[..., rotation_dim:rotation_dim + position_dim].reshape(-1, position_dim)
+                gt_pos3 = gt_seq[..., rotation_dim:rotation_dim + position_dim].reshape(-1, position_dim)
 
                 rot_loss = rot_loss_fn(
                     sixd_torch.to_matrix(pred_rot6.reshape(-1, 3, 2)),
