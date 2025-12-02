@@ -1,6 +1,8 @@
 import os
 import torch
 import time
+import logging
+import config
 
 from torch_geometric.loader import DataLoader
 
@@ -11,8 +13,28 @@ import pymotion.rotations.ortho6d_torch as sixd_torch
 
 
 if __name__ == "__main__":
+    start_time = time.strftime("%Y%m%d-%H%M%S")
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    context = 20
+    context = config.context_length
+
+    os.makedirs(config.logs_dir, exist_ok=True)
+    os.makedirs(config.checkpoints_dir, exist_ok=True)
+
+    log_path = os.path.join(
+        config.logs_dir, f"model_{start_time}_training.log"
+    )
+    logger = logging.getLogger("train_rec")
+    logger.setLevel(logging.INFO)
+    logger.handlers = []
+    fh = logging.FileHandler(log_path)
+    fh.setLevel(logging.INFO)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    fh.setFormatter(formatter)
+    ch.setFormatter(formatter)
+    logger.addHandler(fh)
+    logger.addHandler(ch)
 
     dataset = BVHMotionDataset("./datasets/lafan1train", context=context, step=context)
 
@@ -48,19 +70,24 @@ if __name__ == "__main__":
     rot_loss_fn = GeodesicLoss(reduction="mean")
     pos_loss_fn = torch.nn.MSELoss(reduction="mean")
 
-    print(
-        f"Train size: {len(train_loader) * batch_size}, "
-        f"Validation size: {len(val_loader) * batch_size}"
+    logger.info(
+        f"Train size: {len(train_loader) * batch_size}, Validation size: {len(val_loader) * batch_size}"
     )
 
-    rotation_dim = 6
-    position_dim = 3
+    rotation_dim = config.rotation_dim
+    position_dim = config.position_dim
     feature_dim = rotation_dim + position_dim
 
-    rollout = 5
-    pos_weight = 0.03
+    rollout = config.gen_frames
+    pos_weight = config.pos_weight
 
-    for epoch in range(200):
+    patience = config.early_stopping_patience
+    min_delta = config.early_stopping_min_delta
+    ckpt_interval = config.checkpoint_interval
+    best_val = float('inf')
+    epochs_no_improve = 0
+
+    for epoch in range(config.epochs):
         model.train()
         train_loss = 0.0
         train_rot_loss = 0.0
@@ -189,16 +216,41 @@ if __name__ == "__main__":
                 val_loss += loss.item()
 
         val_loss /= len(val_loader)
-        print(
+        logger.info(
             f"Epoch {epoch + 1:03d} | "
             f"Train Loss: {train_loss:.6f} "
             f"(rot: {train_rot_loss:.6f}, pos: {train_pos_loss:.6f}) | "
             f"Val Loss: {val_loss:.6f}"
         )
 
-    save_dir = "./checkpoints"
-    os.makedirs(save_dir, exist_ok=True)
+        if (epoch + 1) % ckpt_interval == 0:
+            ckpt_name = f"model_{start_time}-{epoch + 1}.pth"
+            torch.save(
+                model.state_dict(),
+                os.path.join(config.checkpoints_dir, ckpt_name),
+            )
+            logger.info(f"Saved checkpoint: {ckpt_name}")
+
+        if val_loss + min_delta < best_val:
+            best_val = val_loss
+            epochs_no_improve = 0
+            best_name = f"model_{start_time}-best.pth"
+            torch.save(
+                model.state_dict(),
+                os.path.join(config.checkpoints_dir, best_name),
+            )
+            logger.info(f"New best val loss {best_val:.6f}. Saved: {best_name}")
+        else:
+            epochs_no_improve += 1
+            if epochs_no_improve >= patience:
+                logger.info(
+                    f"Early stopping triggered at epoch {epoch + 1}. Best Val Loss: {best_val:.6f}"
+                )
+                break
+
+    final_name = f"model_{start_time}-final.pth"
     torch.save(
         model.state_dict(),
-        os.path.join(save_dir, "model_" + time.strftime("%Y%m%d-%H%M%S") + ".pth"),
+        os.path.join(config.checkpoints_dir, final_name),
     )
+    logger.info(f"Training completed. Saved final model: {final_name}")

@@ -10,26 +10,27 @@ import pymotion.rotations.ortho6d as sixd
 import pymotion.rotations.ortho6d_torch as sixd_torch
 from pymotion.io.bvh import BVH
 import pymotion.rotations.quat as quat
+import config
 
 if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    checkpoint_path = "./checkpoints/model_20251202-155545.pth"
+    checkpoint_path = "./checkpoints/model_20251202-171647-best.pth"
     dataset_path = "datasets/lafan1eval"
     out_dir = "./eval_results"
     os.makedirs(out_dir, exist_ok=True)
 
-    context = 20
-    rollout = 5
+    context = config.context_length
+    rollout = config.gen_frames
     num_samples = 5
     random.seed(10)
 
-    rotation_dim = 6
-    position_dim = 3
+    rotation_dim = config.rotation_dim
+    position_dim = config.position_dim
     feature_dim = rotation_dim + position_dim
-    pos_weight = 0.1
+    pos_weight = config.pos_weight
 
-    dataset = BVHMotionDataset(dataset_path, context=context, step=20)
+    dataset = BVHMotionDataset(dataset_path, context=context, step=context)
 
     model = Model().to(device)
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))

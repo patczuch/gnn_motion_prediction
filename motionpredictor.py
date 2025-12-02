@@ -1,19 +1,20 @@
 import torch
 from torch_geometric.nn import GATConv
 from torch_geometric.nn import global_max_pool
+import config
 
 
 class GATEncoder(torch.nn.Module):
     def __init__(self, z_dim):
         super(GATEncoder, self).__init__()
 
-        context_length = 20
-        rotation_dim = 6
-        position_dim = 3
+        context_length = config.context_length
+        rotation_dim = config.rotation_dim
+        position_dim = config.position_dim
         input_dim = (rotation_dim + position_dim) * context_length
 
-        hid_lyrs = [24, 24, 24]
-        heads_num = 32
+        hid_lyrs = config.hid_lyrs
+        heads_num = config.head_num
 
         e_Fs = [input_dim] + hid_lyrs + [z_dim]
         self.convs = []
@@ -47,14 +48,14 @@ class GATDecoder(torch.nn.Module):
     def __init__(self, z_dim):
         super().__init__()
 
-        rotation_dim = 6
-        position_dim = 3
-        gen_frames = 5
+        rotation_dim = config.rotation_dim
+        position_dim = config.position_dim
+        gen_frames = config.gen_frames
         out_dim = (rotation_dim + position_dim) * gen_frames
 
-        hid_lyrs = [24, 24, 24]
-        heads_num = 32
-        tgt_all_lyr = True
+        hid_lyrs = config.hid_lyrs
+        heads_num = config.head_num
+        tgt_all_lyr = config.tgt_all_lyr
 
         tgt_dim = rotation_dim + position_dim
 
@@ -92,7 +93,7 @@ class GATDecoder(torch.nn.Module):
 class Model(torch.nn.Module):
     def __init__(self):
         super(Model, self).__init__()
-        z_dim = 72
+        z_dim = config.z_dim
 
         self.encoder = GATEncoder(z_dim)
         self.decoder = GATDecoder(z_dim)
