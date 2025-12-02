@@ -15,14 +15,14 @@ import config
 if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    checkpoint_path = "./checkpoints/model_20251202-171647-best.pth"
+    checkpoint_path = "./checkpoints/model_20251202-181934-best.pth"
     dataset_path = "datasets/lafan1eval"
     out_dir = "./eval_results"
     os.makedirs(out_dir, exist_ok=True)
 
     context = config.context_length
     rollout = config.gen_frames
-    num_samples = 5
+    num_samples = 10
     random.seed(10)
 
     rotation_dim = config.rotation_dim
@@ -68,6 +68,10 @@ if __name__ == "__main__":
                 feats[start + f, :, :rotation_dim].reshape(J, rotation_dim)
                 for f in range(context)
             ]
+            bvh_rots_gt = [
+                feats[start + f, :, :rotation_dim].reshape(J, rotation_dim)
+                for f in range(context)
+            ]
 
             src_graph.x = context_frames.reshape(J, context * feature_dim).to(device)
             pred = model(src_graph, lastframe_graph)  # (J, rollout * feature_dim)
@@ -90,6 +94,10 @@ if __name__ == "__main__":
                 gt_rot6 = gt_step[:, :rotation_dim]
                 gt_pos3 = gt_step[:, rotation_dim:rotation_dim + position_dim]
 
+                gt_mat = sixd_torch.to_matrix(gt_rot6.view(-1, 3, 2))  # (J, 3, 3)
+                gt_6d_norm = gt_mat[..., :3, :2].reshape(J, rotation_dim)
+                bvh_rots_gt.append(gt_6d_norm.cpu())
+
                 rot_loss = rot_loss_fn(
                     pred_mat,
                     sixd_torch.to_matrix(gt_rot6.view(-1, 3, 2)),
@@ -108,18 +116,27 @@ if __name__ == "__main__":
             avg_loss = sum(losses) / len(losses)
             all_losses.append(avg_loss)
 
-            bvh_rots = torch.stack(bvh_rots)  # (total_frames, J, 6)
+            bvh_rots = torch.stack(bvh_rots)      # (total_frames, J, 6)
+            bvh_rots_gt = torch.stack(bvh_rots_gt)  # (total_frames, J, 6)
 
             ortho6 = bvh_rots.view(-1, 3, 2).cpu().numpy()
+            ortho6_gt = bvh_rots_gt.view(-1, 3, 2).cpu().numpy()
             bvh_rots = bvh_rots.to(torch.float32)
+            bvh_rots_gt = bvh_rots_gt.to(torch.float32)
             T, Jb, D = bvh_rots.shape
             assert T == total_frames and Jb == J and D == rotation_dim
 
-            quats = sixd.to_quat(ortho6)        # (T*J, 4)
-            quats = quats.reshape(T, J, 4)      # (T, J, 4)
+            quats = sixd.to_quat(ortho6)            # (T*J, 4)
+            quats = quats.reshape(T, J, 4)          # (T, J, 4)
+            quats_gt = sixd.to_quat(ortho6_gt)      # (T*J, 4)
+            quats_gt = quats_gt.reshape(T, J, 4)    # (T, J, 4)
 
             eulers = quat.to_euler(
                 quats,
+                np.tile(dataset.rot_order, (T, 1, 1)),
+            ) * 180 / math.pi
+            eulers_gt = quat.to_euler(
+                quats_gt,
                 np.tile(dataset.rot_order, (T, 1, 1)),
             ) * 180 / math.pi
 
@@ -136,14 +153,34 @@ if __name__ == "__main__":
                 "frame_time": dataset.frame_time,
             }
 
+            bvh_gt = BVH()
+            bvh_gt.data = {
+                "names": dataset.names,
+                "offsets": dataset.offsets,
+                "end_sites": dataset.end_sites,
+                "end_sites_parents": dataset.end_sites_parents,
+                "parents": dataset.parents,
+                "rot_order": dataset.rot_order,
+                "positions": np.zeros((total_frames, len(dataset.names), 3)),
+                "rotations": eulers_gt,
+                "frame_time": dataset.frame_time,
+            }
+
             out_gen = os.path.join(
                 out_dir,
                 f"gen_{os.path.basename(filepath).replace('.bvh','')}_{start}.bvh",
             )
             bvh_gen.save(out_gen)
 
+            out_gt = os.path.join(
+                out_dir,
+                f"gt_{os.path.basename(filepath).replace('.bvh','')}_{start}.bvh",
+            )
+            bvh_gt.save(out_gt)
+
             print(f"Exported sample {idx} →")
             print(f"  Generated:   {out_gen}")
+            print(f"  GroundTruth: {out_gt}")
             print(f"  Average rollout loss = {avg_loss:.6f}")
             print("")
 

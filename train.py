@@ -25,11 +25,11 @@ if __name__ == "__main__":
         config.logs_dir, f"model_{start_time}_training.log"
     )
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        stream=sys.stdout,
-    )
+    # logging.basicConfig(
+    #     level=logging.INFO,
+    #     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    #     stream=sys.stdout,
+    # )
 
     logger = logging.getLogger("train")
     logger.setLevel(logging.INFO)

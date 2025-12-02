@@ -3,9 +3,9 @@ position_dim = 3
 context_length = 20
 gen_frames = 5
 
-z_dim = 72
-hid_lyrs = [24, 24, 24]
-head_num = 32
+z_dim = 144
+hid_lyrs = [32, 32, 32, 32, 32]
+head_num = 96
 tgt_all_lyr = True
 
 epochs = 1000
