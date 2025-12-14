@@ -48,32 +48,11 @@ class BVHMotionDataset(Dataset):
                 feats = torch.load(cache_path)
                 print("  loaded precomputed features")
             else:
-                global_positions = np.zeros((len(local_positions), 3))
-                # global_positions = local_positions[:, 0, :] # TODO someday
-
-                pos, rotmats = fk(
-                    torch.from_numpy(rotations_quat),
-                    torch.from_numpy(global_positions),
-                    torch.from_numpy(offsets),
-                    torch.from_numpy(parents),
-                )
-
                 rot6_np = sixd.from_quat(rotations_quat)  # (F, J, 3, 2)
                 rot6 = torch.from_numpy(rot6_np).float()
                 rot6 = rot6.reshape(rot6.shape[0], rot6.shape[1], -1)  # (F, J, 6)
 
-                pos_t = torch.from_numpy(pos).float()  # (F, J, 3)
-
-                parents_t = torch.from_numpy(parents).long()
-
-                F, J, _ = pos_t.shape
-                pos_rel = pos_t.clone()
-
-                for j in range(1, J):
-                    p = parents_t[j].item()
-                    pos_rel[:, j] = pos_t[:, j] - pos_t[:, p]
-
-                feats = torch.cat([rot6, pos_rel], dim=-1)  # (F, J, 9)
+                feats = torch.cat([rot6], dim=-1)  # (F, J, 9)
 
                 torch.save(feats, cache_path)
                 print("  wrote cached features")
@@ -95,23 +74,13 @@ class BVHMotionDataset(Dataset):
 
         J = feats.shape[1]
         H = self.context
-        feat_size = feats.shape[2]           # 9 = 6 rot + 3 pos
+        rotsize = 6
 
-        context = (
-            feats[start:start + H]           # (H, J, 9)
-            .reshape(H, J, feat_size)       # (H, J, 9)
-            .permute(1, 0, 2)               # (J, H, 9)
-            .reshape(J, H * feat_size)      # (J, H*9)
-        )
+        context = feats[start:start + H].reshape(H, J, rotsize).permute(1, 0, 2).reshape(J, H * rotsize)
 
-        target = (
-            feats[start + H:start + H + H]   # (H, J, 9)
-            .reshape(H, J, feat_size)
-            .permute(1, 0, 2)
-            .reshape(J, H * feat_size)
-        )
+        target = feats[start + H:start + H + H].reshape(H, J, rotsize).permute(1, 0, 2).reshape(J, H * rotsize)
 
-        lastframe = feats[start + H - 1].reshape(J, feat_size)  # (J, 9)
+        lastframe = feats[start + H - 1].reshape(J, rotsize)
 
         batch = torch.zeros(J, dtype=torch.long)
 

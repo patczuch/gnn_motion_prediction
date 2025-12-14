@@ -3,7 +3,6 @@ import torch
 import time
 import logging
 import config
-import sys
 
 from torch_geometric.loader import DataLoader
 
@@ -11,6 +10,8 @@ from geodesicloss import GeodesicLoss
 from motionpredictor import Model
 from dataset import BVHMotionDataset
 import pymotion.rotations.ortho6d_torch as sixd_torch
+import pymotion.rotations.quat_torch as quat_torch
+import pymotion.ops.skeleton_torch as skeleton_torch
 
 
 if __name__ == "__main__":
@@ -73,7 +74,7 @@ if __name__ == "__main__":
 
     rotation_dim = config.rotation_dim
     position_dim = config.position_dim
-    feature_dim = rotation_dim + position_dim
+    feature_dim = rotation_dim
     gen_frames = config.gen_frames
 
     pos_weight = config.pos_weight
@@ -97,25 +98,44 @@ if __name__ == "__main__":
 
             pred = model(src_graph, lastframe_graph)
 
-            gt_seq_flat = tgt_graph.x[:, :gen_frames * feature_dim]  # (J, gen_frames * feature_dim)
+            gt_seq_flat = tgt_graph.x[:, :gen_frames * feature_dim]  # (BJ, gen_frames * 6)
 
-            pred_seq = pred.view(-1, gen_frames, feature_dim)
-            gt_seq = gt_seq_flat.view(-1, gen_frames, feature_dim)
+            BJ = pred.shape[0]
+            B = int(src_graph.batch.max().item()) + 1 if hasattr(src_graph, 'batch') else 1
+            J = BJ // B
 
-            pred_rot6 = pred_seq[..., :rotation_dim].reshape(-1, rotation_dim)
-            gt_rot6 = gt_seq[..., :rotation_dim].reshape(-1, rotation_dim)
+            pred_seq = pred.view(B, J, gen_frames, feature_dim)
+            gt_seq = gt_seq_flat.view(B, J, gen_frames, feature_dim)
 
-            pred_pos3 = pred_seq[..., rotation_dim:rotation_dim + position_dim].reshape(-1, position_dim)
-            gt_pos3 = gt_seq[..., rotation_dim:rotation_dim + position_dim].reshape(-1, position_dim)
+            pred_rot6 = pred_seq.reshape(B * J * gen_frames, rotation_dim)
+            gt_rot6 = gt_seq.reshape(B * J * gen_frames, rotation_dim)
+
+            pred_R = sixd_torch.to_matrix(pred_rot6.view(-1, 3, 2)).view(B, J, gen_frames, 3, 3)
+            gt_R = sixd_torch.to_matrix(gt_rot6.view(-1, 3, 2)).view(B, J, gen_frames, 3, 3)
 
             rot_loss = rot_loss_fn(
-                sixd_torch.to_matrix(pred_rot6.reshape(-1, 3, 2)),
-                sixd_torch.to_matrix(gt_rot6.reshape(-1, 3, 2))
+                pred_R.reshape(-1, 3, 3),
+                gt_R.reshape(-1, 3, 3)
             )
 
             train_rot_loss += rot_loss
 
-            pos_loss = pos_loss_fn(pred_pos3, gt_pos3)
+            pred_quat = quat_torch.from_matrix(pred_R.reshape(-1, 3, 3)).view(B, J, gen_frames, 4)
+            gt_quat = quat_torch.from_matrix(gt_R.reshape(-1, 3, 3)).view(B, J, gen_frames, 4)
+
+            pred_quat_tm = pred_quat.permute(0, 2, 1, 3)  # (B, T, J, 4)
+            gt_quat_tm = gt_quat.permute(0, 2, 1, 3)  # (B, T, J, 4)
+
+            parents_t = torch.tensor(dataset.parents, device=device).long()  # (J,)
+            offsets_t = torch.tensor(dataset.offsets, device=device).to(pred.dtype)  # (J, 3)
+            offsets_bt = offsets_t.view(1, 1, J, 3).expand(B, gen_frames, J, 3)  # (B, T, J, 3)
+
+            global_pos = torch.zeros((B, gen_frames, 3), device=device, dtype=pred.dtype)
+
+            pred_pos_tm, _ = skeleton_torch.fk(pred_quat_tm, global_pos, offsets_bt, parents_t)  # (B, T, J, 3)
+            gt_pos3, _ = skeleton_torch.fk(gt_quat_tm, global_pos, offsets_bt, parents_t)  # (B, T, J, 3)
+
+            pos_loss = pos_loss_fn(pred_pos_tm, gt_pos3)
 
             train_pos_loss += pos_weight * pos_loss
 
@@ -143,20 +163,39 @@ if __name__ == "__main__":
 
                 gt_seq_flat = tgt_graph.x[:, :gen_frames * feature_dim]
 
-                pred_seq = pred.view(-1, gen_frames, feature_dim)
-                gt_seq = gt_seq_flat.view(-1, gen_frames, feature_dim)
+                BJ = pred.shape[0]
+                B = int(src_graph.batch.max().item()) + 1 if hasattr(src_graph, 'batch') else 1
+                J = BJ // B
 
-                pred_rot6 = pred_seq[..., :rotation_dim].reshape(-1, rotation_dim)
-                gt_rot6 = gt_seq[..., :rotation_dim].reshape(-1, rotation_dim)
+                pred_seq = pred.view(B, J, gen_frames, feature_dim)
+                gt_seq = gt_seq_flat.view(B, J, gen_frames, feature_dim)
 
-                pred_pos3 = pred_seq[..., rotation_dim:rotation_dim + position_dim].reshape(-1, position_dim)
-                gt_pos3 = gt_seq[..., rotation_dim:rotation_dim + position_dim].reshape(-1, position_dim)
+                pred_rot6 = pred_seq.reshape(B * J * gen_frames, rotation_dim)
+                gt_rot6 = gt_seq.reshape(B * J * gen_frames, rotation_dim)
+
+                pred_R = sixd_torch.to_matrix(pred_rot6.view(-1, 3, 2)).view(B, J, gen_frames, 3, 3)
+                gt_R = sixd_torch.to_matrix(gt_rot6.view(-1, 3, 2)).view(B, J, gen_frames, 3, 3)
 
                 rot_loss = rot_loss_fn(
-                    sixd_torch.to_matrix(pred_rot6.reshape(-1, 3, 2)),
-                    sixd_torch.to_matrix(gt_rot6.reshape(-1, 3, 2))
+                    pred_R.reshape(-1, 3, 3),
+                    gt_R.reshape(-1, 3, 3)
                 )
-                pos_loss = pos_loss_fn(pred_pos3, gt_pos3)
+
+                pred_quat = quat_torch.from_matrix(pred_R.reshape(-1, 3, 3)).view(B, J, gen_frames, 4)
+                gt_quat = quat_torch.from_matrix(gt_R.reshape(-1, 3, 3)).view(B, J, gen_frames, 4)
+
+                pred_quat_tm = pred_quat.permute(0, 2, 1, 3)  # (B, T, J, 4)
+                gt_quat_tm = gt_quat.permute(0, 2, 1, 3)  # (B, T, J, 4)
+
+                parents_t = torch.tensor(dataset.parents, device=device).long()  # (J,)
+                offsets_t = torch.tensor(dataset.offsets, device=device).to(pred.dtype)  # (J, 3)
+                offsets_bt = offsets_t.view(1, 1, J, 3).expand(B, gen_frames, J, 3)  # (B, T, J, 3)
+                global_pos = torch.zeros((B, gen_frames, 3), device=device, dtype=pred.dtype)
+
+                pred_pos_tm, _ = skeleton_torch.fk(pred_quat_tm, global_pos, offsets_bt, parents_t)  # (B, T, J, 3)
+                gt_pos3, _ = skeleton_torch.fk(gt_quat_tm, global_pos, offsets_bt, parents_t)  # (B, T, J, 3)
+
+                pos_loss = pos_loss_fn(pred_pos_tm, gt_pos3)
 
                 loss = rot_loss + pos_weight * pos_loss
                 val_loss += loss.item()

@@ -10,8 +10,7 @@ class GATEncoder(torch.nn.Module):
 
         context_length = config.context_length
         rotation_dim = config.rotation_dim
-        position_dim = config.position_dim
-        input_dim = (rotation_dim + position_dim) * context_length
+        input_dim = rotation_dim * context_length
 
         hid_lyrs = config.hid_lyrs
         heads_num = config.head_num
@@ -49,15 +48,14 @@ class GATDecoder(torch.nn.Module):
         super().__init__()
 
         rotation_dim = config.rotation_dim
-        position_dim = config.position_dim
         gen_frames = config.gen_frames
-        out_dim = (rotation_dim + position_dim) * gen_frames
+        out_dim = rotation_dim * gen_frames
 
         hid_lyrs = config.hid_lyrs
         heads_num = config.head_num
         tgt_all_lyr = config.tgt_all_lyr
 
-        tgt_dim = rotation_dim + position_dim
+        tgt_dim = rotation_dim
 
         d_Fs = [z_dim + tgt_dim] + hid_lyrs + [out_dim]
         self.deconvs = []

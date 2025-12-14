@@ -8,14 +8,17 @@ from dataset import BVHMotionDataset
 from geodesicloss import GeodesicLoss
 import pymotion.rotations.ortho6d as sixd
 import pymotion.rotations.ortho6d_torch as sixd_torch
+import pymotion.rotations.quat_torch as quat_torch
+import pymotion.ops.skeleton_torch as skeleton_torch
 from pymotion.io.bvh import BVH
 import pymotion.rotations.quat as quat
 import config
+from plot_helpers import save_fk_3d_plots
 
 if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    checkpoint_path = "./checkpoints/model_20251202-181934-best.pth"
+    checkpoint_path = "./checkpoints/model_20251228-114721-final.pth"
     dataset_path = "datasets/lafan1eval"
     out_dir = "./eval_results"
     os.makedirs(out_dir, exist_ok=True)
@@ -26,8 +29,7 @@ if __name__ == "__main__":
     random.seed(10)
 
     rotation_dim = config.rotation_dim
-    position_dim = config.position_dim
-    feature_dim = rotation_dim + position_dim
+    feature_dim = rotation_dim
     pos_weight = config.pos_weight
 
     dataset = BVHMotionDataset(dataset_path, context=context, step=context)
@@ -74,25 +76,23 @@ if __name__ == "__main__":
             ]
 
             src_graph.x = context_frames.reshape(J, context * feature_dim).to(device)
-            pred = model(src_graph, lastframe_graph)  # (J, rollout * feature_dim)
+            pred = model(src_graph, lastframe_graph)  # (J, rollout * 6)
 
-            pred_seq = pred.view(J, rollout, feature_dim)  # (J, rollout, 9)
+            pred_seq = pred.view(J, rollout, feature_dim)  # (J, rollout, 6)
             gt_seq = tgt_graph.x[:, :rollout * feature_dim].view(J, rollout, feature_dim)
 
             for step in range(rollout):
-                pred_step = pred_seq[:, step, :]  # (J, 9)
+                pred_step = pred_seq[:, step, :]  # (J, 6)
 
-                pred_rot6 = pred_step[:, :rotation_dim]
-                pred_pos3 = pred_step[:, rotation_dim:rotation_dim + position_dim]
+                pred_rot6 = pred_step
 
                 pred_mat = sixd_torch.to_matrix(pred_rot6.view(-1, 3, 2))  # (J, 3, 3)
                 pred_6d_norm = pred_mat[..., :3, :2].reshape(J, rotation_dim)
 
                 bvh_rots.append(pred_6d_norm.cpu())
 
-                gt_step = gt_seq[:, step, :]  # (J, 9)
-                gt_rot6 = gt_step[:, :rotation_dim]
-                gt_pos3 = gt_step[:, rotation_dim:rotation_dim + position_dim]
+                gt_step = gt_seq[:, step, :]  # (J, 6)
+                gt_rot6 = gt_step
 
                 gt_mat = sixd_torch.to_matrix(gt_rot6.view(-1, 3, 2))  # (J, 3, 3)
                 gt_6d_norm = gt_mat[..., :3, :2].reshape(J, rotation_dim)
@@ -103,9 +103,32 @@ if __name__ == "__main__":
                     sixd_torch.to_matrix(gt_rot6.view(-1, 3, 2)),
                 )
 
-                pos_loss = pos_loss_fn(pred_pos3, gt_pos3)
+                pred_quat = quat_torch.from_matrix(
+                    sixd_torch.to_matrix(pred_seq[:, : step + 1, :].reshape(-1, 3, 2))
+                ).view(1, J, step + 1, 4)
+                gt_quat = quat_torch.from_matrix(
+                    sixd_torch.to_matrix(gt_seq[:, : step + 1, :].reshape(-1, 3, 2))
+                ).view(1, J, step + 1, 4)
 
-                loss = rot_loss + pos_weight * pos_loss
+                pred_quat_tm = pred_quat.permute(0, 2, 1, 3)  # (B=1, T, J, 4)
+                gt_quat_tm = gt_quat.permute(0, 2, 1, 3)  # (B=1, T, J, 4)
+
+                parents_t = torch.tensor(dataset.parents, device=device).long()
+                offsets_t = torch.tensor(dataset.offsets, device=device).to(pred.dtype)
+                offsets_bt = offsets_t.view(1, 1, J, 3).expand(1, step + 1, J, 3)  # (B=1, T, J, 3)
+
+                global_pos = torch.zeros((1, step + 1, 3), device=device, dtype=pred.dtype)
+
+                pred_pos_tm, _ = skeleton_torch.fk(pred_quat_tm, global_pos, offsets_bt, parents_t)  # (1, T, J, 3)
+                gt_pos_tm, _ = skeleton_torch.fk(gt_quat_tm, global_pos, offsets_bt, parents_t)  # (1, T, J, 3)
+
+                t_idx = step
+                plot_path = os.path.join(out_dir, "plots", f"sample_{os.path.basename(filepath).replace('.bvh','')}_{start}_step_{step:03d}.png")
+                save_fk_3d_plots(pred_pos_tm, gt_pos_tm, dataset.parents, plot_path, t_idx=t_idx)
+
+                pos_loss = pos_weight * pos_loss_fn(pred_pos_tm, gt_pos_tm)
+
+                loss = rot_loss + pos_loss
                 losses.append(loss)
                 print(
                     f"Sample {idx} frame {step} | "
