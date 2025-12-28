@@ -3,7 +3,6 @@ import torch
 import numpy as np
 from torch_geometric.data import Data, Dataset
 from pymotion.io.bvh import BVH
-from pymotion.ops.skeleton import fk
 import pymotion.rotations.ortho6d as sixd
 
 
@@ -43,6 +42,9 @@ class BVHMotionDataset(Dataset):
                 self.edges = torch.tensor(
                     [(parents[j], j) for j in range(1, len(parents))]
                 ).t().long()
+                self.bone_lengths = torch.from_numpy(
+                    np.linalg.norm(offsets, axis=1, keepdims=True)
+                ).float()  # (J, 1)
 
             if os.path.exists(cache_path):
                 feats = torch.load(cache_path)
@@ -81,6 +83,11 @@ class BVHMotionDataset(Dataset):
         target = feats[start + H:start + H + H].reshape(H, J, rotsize).permute(1, 0, 2).reshape(J, H * rotsize)
 
         lastframe = feats[start + H - 1].reshape(J, rotsize)
+
+        bone_lengths = self.bone_lengths  # (J, 1)
+        context = torch.cat([bone_lengths, context], dim=1)  # (J, 1 + H * rotsize)
+        target = torch.cat([bone_lengths, target], dim=1)    # (J, 1 + H * rotsize)
+        lastframe = torch.cat([bone_lengths, lastframe], dim=1)  # (J, 1 + rotsize)
 
         batch = torch.zeros(J, dtype=torch.long)
 

@@ -1,5 +1,5 @@
 rotation_dim = 6
-position_dim = 3
+bone_length_dim = 1
 context_length = 20
 gen_frames = 5
 

@@ -73,7 +73,6 @@ if __name__ == "__main__":
     )
 
     rotation_dim = config.rotation_dim
-    position_dim = config.position_dim
     feature_dim = rotation_dim
     gen_frames = config.gen_frames
 
