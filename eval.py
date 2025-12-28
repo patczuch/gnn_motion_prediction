@@ -122,9 +122,9 @@ if __name__ == "__main__":
                 pred_pos_tm, _ = skeleton_torch.fk(pred_quat_tm, global_pos, offsets_bt, parents_t)  # (1, T, J, 3)
                 gt_pos_tm, _ = skeleton_torch.fk(gt_quat_tm, global_pos, offsets_bt, parents_t)  # (1, T, J, 3)
 
-                t_idx = step
-                plot_path = os.path.join(out_dir, "plots", f"sample_{os.path.basename(filepath).replace('.bvh','')}_{start}_step_{step:03d}.png")
-                save_fk_3d_plots(pred_pos_tm, gt_pos_tm, dataset.parents, plot_path, t_idx=t_idx)
+                #t_idx = step
+                #plot_path = os.path.join(out_dir, "plots", f"sample_{os.path.basename(filepath).replace('.bvh','')}_{start}_step_{step:03d}.png")
+                #save_fk_3d_plots(pred_pos_tm, gt_pos_tm, dataset.parents, plot_path, t_idx=t_idx)
 
                 pos_loss = pos_weight * pos_loss_fn(pred_pos_tm, gt_pos_tm)
 
