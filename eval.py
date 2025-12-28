@@ -18,7 +18,7 @@ from plot_helpers import save_fk_3d_plots
 if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    checkpoint_path = "./checkpoints/model_20251228-171815-best.pth"
+    checkpoint_path = "./checkpoints/model_20251228-173213-best.pth"
     dataset_path = "datasets/lafan1eval"
     out_dir = "./eval_results"
     os.makedirs(out_dir, exist_ok=True)
