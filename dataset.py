@@ -5,6 +5,8 @@ from torch_geometric.data import Data, Dataset
 from pymotion.io.bvh import BVH
 import pymotion.rotations.ortho6d as sixd
 
+import config
+
 
 class BVHMotionDataset(Dataset):
     def __init__(self, directory, context, step):
@@ -76,11 +78,12 @@ class BVHMotionDataset(Dataset):
 
         J = feats.shape[1]
         H = self.context
-        rotsize = 6
+        rotsize = config.rotation_dim
 
+        gen_frames = config.gen_frames
         context = feats[start:start + H].reshape(H, J, rotsize).permute(1, 0, 2).reshape(J, H * rotsize)
-
-        target = feats[start + H:start + H + H].reshape(H, J, rotsize).permute(1, 0, 2).reshape(J, H * rotsize)
+        target = feats[start + H:start + H + gen_frames]
+        target = target.reshape(gen_frames, J, rotsize).permute(1, 0, 2).reshape(J, gen_frames * rotsize)
 
         lastframe = feats[start + H - 1].reshape(J, rotsize)
 

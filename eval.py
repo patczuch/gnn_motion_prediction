@@ -18,7 +18,7 @@ from plot_helpers import save_fk_3d_plots
 if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    checkpoint_path = "./checkpoints/model_20251228-114721-final.pth"
+    checkpoint_path = "./checkpoints/model_20251228-171815-best.pth"
     dataset_path = "datasets/lafan1eval"
     out_dir = "./eval_results"
     os.makedirs(out_dir, exist_ok=True)
@@ -59,7 +59,8 @@ if __name__ == "__main__":
             tgt_graph = tgt_graph.to(device)
 
             J = src_graph.x.shape[0]
-            context_frames = src_graph.x.view(J, context, feature_dim)
+            bone_length_dim = config.bone_length_dim
+            context_frames = src_graph.x[:, bone_length_dim:].view(J, context, feature_dim)
 
             losses = []
 
@@ -75,11 +76,12 @@ if __name__ == "__main__":
                 for f in range(context)
             ]
 
-            src_graph.x = context_frames.reshape(J, context * feature_dim).to(device)
+            bone_lengths = src_graph.x[:, :bone_length_dim]  # (J, 1)
+            src_graph.x = torch.cat([bone_lengths, context_frames.reshape(J, context * feature_dim)], dim=1).to(device)
             pred = model(src_graph, lastframe_graph)  # (J, rollout * 6)
 
             pred_seq = pred.view(J, rollout, feature_dim)  # (J, rollout, 6)
-            gt_seq = tgt_graph.x[:, :rollout * feature_dim].view(J, rollout, feature_dim)
+            gt_seq = tgt_graph.x[:, bone_length_dim:bone_length_dim + rollout * feature_dim].view(J, rollout, feature_dim)
 
             for step in range(rollout):
                 pred_step = pred_seq[:, step, :]  # (J, 6)

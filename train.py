@@ -5,14 +5,58 @@ import logging
 import config
 
 from torch_geometric.loader import DataLoader
-
+from torch.amp import autocast, GradScaler
 from geodesicloss import GeodesicLoss
 from motionpredictor import Model
 from dataset import BVHMotionDataset
 import pymotion.rotations.ortho6d_torch as sixd_torch
 import pymotion.rotations.quat_torch as quat_torch
 import pymotion.ops.skeleton_torch as skeleton_torch
+from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingWarmRestarts
 
+
+
+def compute_loss(pred, tgt_graph, src_graph, parents_t, offsets_t,
+                 rot_loss_fn, pos_loss_fn, pos_weight, config):
+    bone_length_dim = config.bone_length_dim
+    rotation_dim = config.rotation_dim
+    feature_dim = rotation_dim
+    gen_frames = config.gen_frames
+
+    gt_seq_flat = tgt_graph.x[:, bone_length_dim:bone_length_dim + gen_frames * feature_dim]
+
+    BJ = pred.shape[0]
+    B = int(src_graph.batch.max().item()) + 1 if hasattr(src_graph, 'batch') else 1
+    J = BJ // B
+
+    pred_seq = pred.view(B, J, gen_frames, feature_dim)
+    gt_seq = gt_seq_flat.view(B, J, gen_frames, feature_dim)
+
+    pred_rot6 = pred_seq.reshape(B * J * gen_frames, rotation_dim)
+    gt_rot6 = gt_seq.reshape(B * J * gen_frames, rotation_dim)
+
+    pred_R = sixd_torch.to_matrix(pred_rot6.view(-1, 3, 2)).view(B, J, gen_frames, 3, 3)
+    gt_R = sixd_torch.to_matrix(gt_rot6.view(-1, 3, 2)).view(B, J, gen_frames, 3, 3)
+
+    rot_loss = rot_loss_fn(pred_R.reshape(-1, 3, 3), gt_R.reshape(-1, 3, 3))
+
+    pred_quat = quat_torch.from_matrix(pred_R.reshape(-1, 3, 3)).view(B, J, gen_frames, 4)
+    gt_quat = quat_torch.from_matrix(gt_R.reshape(-1, 3, 3)).view(B, J, gen_frames, 4)
+
+    pred_quat_tm = pred_quat.permute(0, 2, 1, 3)
+    gt_quat_tm = gt_quat.permute(0, 2, 1, 3)
+
+    offsets_bt = offsets_t.view(1, 1, J, 3).expand(B, gen_frames, J, 3)
+    global_pos = torch.zeros((B, gen_frames, 3), device=pred.device, dtype=pred.dtype)
+
+    pred_pos_tm, _ = skeleton_torch.fk(pred_quat_tm, global_pos, offsets_bt, parents_t)
+    gt_pos_tm, _ = skeleton_torch.fk(gt_quat_tm, global_pos, offsets_bt, parents_t)
+
+    pos_loss = pos_loss_fn(pred_pos_tm, gt_pos_tm)
+
+    total_loss = rot_loss + pos_weight * pos_loss
+
+    return total_loss, rot_loss, pos_loss * pos_weight
 
 if __name__ == "__main__":
     start_time = time.strftime("%Y%m%d-%H%M%S")
@@ -64,7 +108,11 @@ if __name__ == "__main__":
 
     model = Model().to(device)
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+    optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
+
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10)
+    #scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=20, T_mult=2)
+
     rot_loss_fn = GeodesicLoss(reduction='mean')
     pos_loss_fn = torch.nn.MSELoss(reduction='mean')
 
@@ -84,6 +132,10 @@ if __name__ == "__main__":
     best_val = float('inf')
     epochs_no_improve = 0
 
+    parents_t = torch.tensor(dataset.parents, device=device).long()
+    offsets_t = torch.tensor(dataset.offsets, device=device).float()
+    scaler = GradScaler('cuda')
+
     for epoch in range(config.epochs):
         model.train()
         train_loss = 0.0
@@ -95,56 +147,24 @@ if __name__ == "__main__":
             lastframe_graph = lastframe_graph.to(device)
             tgt_graph = tgt_graph.to(device)
 
-            pred = model(src_graph, lastframe_graph)
-
-            gt_seq_flat = tgt_graph.x[:, :gen_frames * feature_dim]  # (BJ, gen_frames * 6)
-
-            BJ = pred.shape[0]
-            B = int(src_graph.batch.max().item()) + 1 if hasattr(src_graph, 'batch') else 1
-            J = BJ // B
-
-            pred_seq = pred.view(B, J, gen_frames, feature_dim)
-            gt_seq = gt_seq_flat.view(B, J, gen_frames, feature_dim)
-
-            pred_rot6 = pred_seq.reshape(B * J * gen_frames, rotation_dim)
-            gt_rot6 = gt_seq.reshape(B * J * gen_frames, rotation_dim)
-
-            pred_R = sixd_torch.to_matrix(pred_rot6.view(-1, 3, 2)).view(B, J, gen_frames, 3, 3)
-            gt_R = sixd_torch.to_matrix(gt_rot6.view(-1, 3, 2)).view(B, J, gen_frames, 3, 3)
-
-            rot_loss = rot_loss_fn(
-                pred_R.reshape(-1, 3, 3),
-                gt_R.reshape(-1, 3, 3)
-            )
-
-            train_rot_loss += rot_loss
-
-            pred_quat = quat_torch.from_matrix(pred_R.reshape(-1, 3, 3)).view(B, J, gen_frames, 4)
-            gt_quat = quat_torch.from_matrix(gt_R.reshape(-1, 3, 3)).view(B, J, gen_frames, 4)
-
-            pred_quat_tm = pred_quat.permute(0, 2, 1, 3)  # (B, T, J, 4)
-            gt_quat_tm = gt_quat.permute(0, 2, 1, 3)  # (B, T, J, 4)
-
-            parents_t = torch.tensor(dataset.parents, device=device).long()  # (J,)
-            offsets_t = torch.tensor(dataset.offsets, device=device).to(pred.dtype)  # (J, 3)
-            offsets_bt = offsets_t.view(1, 1, J, 3).expand(B, gen_frames, J, 3)  # (B, T, J, 3)
-
-            global_pos = torch.zeros((B, gen_frames, 3), device=device, dtype=pred.dtype)
-
-            pred_pos_tm, _ = skeleton_torch.fk(pred_quat_tm, global_pos, offsets_bt, parents_t)  # (B, T, J, 3)
-            gt_pos3, _ = skeleton_torch.fk(gt_quat_tm, global_pos, offsets_bt, parents_t)  # (B, T, J, 3)
-
-            pos_loss = pos_loss_fn(pred_pos_tm, gt_pos3)
-
-            train_pos_loss += pos_weight * pos_loss
-
-            loss = rot_loss + pos_weight * pos_loss
-
             optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+
+            with autocast('cuda'):
+                pred = model(src_graph, lastframe_graph)
+                loss, rot_loss, pos_loss = compute_loss(
+                    pred, tgt_graph, src_graph, parents_t, offsets_t,
+                    rot_loss_fn, pos_loss_fn, pos_weight, config
+                )
+
+            scaler.scale(loss).backward()
+            scaler.unscale_(optimizer)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            scaler.step(optimizer)
+            scaler.update()
 
             train_loss += loss.item()
+            train_rot_loss += rot_loss.item()
+            train_pos_loss += pos_loss.item()
 
         train_loss /= len(train_loader)
         train_rot_loss /= len(train_loader)
@@ -152,56 +172,35 @@ if __name__ == "__main__":
 
         model.eval()
         val_loss = 0.0
+        val_rot_loss = 0.0
+        val_pos_loss = 0.0
+
         with torch.no_grad():
             for src_graph, lastframe_graph, tgt_graph in val_loader:
                 src_graph = src_graph.to(device)
                 lastframe_graph = lastframe_graph.to(device)
                 tgt_graph = tgt_graph.to(device)
 
-                pred = model(src_graph, lastframe_graph)
-
-                gt_seq_flat = tgt_graph.x[:, :gen_frames * feature_dim]
-
-                BJ = pred.shape[0]
-                B = int(src_graph.batch.max().item()) + 1 if hasattr(src_graph, 'batch') else 1
-                J = BJ // B
-
-                pred_seq = pred.view(B, J, gen_frames, feature_dim)
-                gt_seq = gt_seq_flat.view(B, J, gen_frames, feature_dim)
-
-                pred_rot6 = pred_seq.reshape(B * J * gen_frames, rotation_dim)
-                gt_rot6 = gt_seq.reshape(B * J * gen_frames, rotation_dim)
-
-                pred_R = sixd_torch.to_matrix(pred_rot6.view(-1, 3, 2)).view(B, J, gen_frames, 3, 3)
-                gt_R = sixd_torch.to_matrix(gt_rot6.view(-1, 3, 2)).view(B, J, gen_frames, 3, 3)
-
-                rot_loss = rot_loss_fn(
-                    pred_R.reshape(-1, 3, 3),
-                    gt_R.reshape(-1, 3, 3)
-                )
-
-                pred_quat = quat_torch.from_matrix(pred_R.reshape(-1, 3, 3)).view(B, J, gen_frames, 4)
-                gt_quat = quat_torch.from_matrix(gt_R.reshape(-1, 3, 3)).view(B, J, gen_frames, 4)
-
-                pred_quat_tm = pred_quat.permute(0, 2, 1, 3)  # (B, T, J, 4)
-                gt_quat_tm = gt_quat.permute(0, 2, 1, 3)  # (B, T, J, 4)
-
-                parents_t = torch.tensor(dataset.parents, device=device).long()  # (J,)
-                offsets_t = torch.tensor(dataset.offsets, device=device).to(pred.dtype)  # (J, 3)
-                offsets_bt = offsets_t.view(1, 1, J, 3).expand(B, gen_frames, J, 3)  # (B, T, J, 3)
-                global_pos = torch.zeros((B, gen_frames, 3), device=device, dtype=pred.dtype)
-
-                pred_pos_tm, _ = skeleton_torch.fk(pred_quat_tm, global_pos, offsets_bt, parents_t)  # (B, T, J, 3)
-                gt_pos3, _ = skeleton_torch.fk(gt_quat_tm, global_pos, offsets_bt, parents_t)  # (B, T, J, 3)
-
-                pos_loss = pos_loss_fn(pred_pos_tm, gt_pos3)
-
-                loss = rot_loss + pos_weight * pos_loss
+                with autocast('cuda'):
+                    pred = model(src_graph, lastframe_graph)
+                    loss, rot_loss, pos_loss = compute_loss(
+                        pred, tgt_graph, src_graph, parents_t, offsets_t,
+                        rot_loss_fn, pos_loss_fn, pos_weight, config
+                    )
                 val_loss += loss.item()
+                val_rot_loss += rot_loss.item()
+                val_pos_loss += pos_loss.item()
 
         val_loss /= len(val_loader)
+        val_rot_loss /= len(val_loader)
+        val_pos_loss /= len(val_loader)
+
+        scheduler.step(val_loss)
+
+        current_lr = optimizer.param_groups[0]['lr']
+
         logger.info(
-            f"Epoch {epoch + 1:03d} | Train Loss: {train_loss:.6f} (rot: {train_rot_loss:.6f}, pos: {train_pos_loss:.6f}) | Val Loss: {val_loss:.6f}"
+            f"Epoch {epoch + 1:03d} | Train Loss: {train_loss:.6f} (rot: {train_rot_loss:.6f}, pos: {train_pos_loss:.6f}) | Val Loss: {val_loss:.6f} (rot: {val_rot_loss:.6f}, pos: {val_pos_loss:.6f}) | LR: {current_lr:.2e}"
         )
 
         if (epoch + 1) % ckpt_interval == 0:
