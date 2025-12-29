@@ -13,7 +13,7 @@ import pymotion.rotations.ortho6d_torch as sixd_torch
 import pymotion.rotations.quat_torch as quat_torch
 import pymotion.ops.skeleton_torch as skeleton_torch
 from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingWarmRestarts
-
+import numpy
 
 
 def compute_loss(pred, tgt_graph, src_graph, parents_t, offsets_t,
@@ -63,6 +63,9 @@ if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     context = config.context_length
 
+    torch.set_printoptions(profile="full")
+    numpy.set_printoptions(threshold=10_000)
+
     os.makedirs(config.logs_dir, exist_ok=True)
     os.makedirs(config.checkpoints_dir, exist_ok=True)
 
@@ -110,7 +113,8 @@ if __name__ == "__main__":
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
-    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10)
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10,
+                                  threshold=config.early_stopping_min_delta, threshold_mode='abs')
     #scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=20, T_mult=2)
 
     rot_loss_fn = GeodesicLoss(reduction='mean')
