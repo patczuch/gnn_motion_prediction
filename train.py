@@ -3,7 +3,9 @@ import torch
 import time
 import logging
 import config
+import random
 
+from torch.utils.data import Sampler
 from torch_geometric.loader import DataLoader
 from torch.amp import autocast, GradScaler
 from geodesicloss import GeodesicLoss
@@ -12,18 +14,55 @@ from dataset import BVHMotionDataset
 import pymotion.rotations.ortho6d_torch as sixd_torch
 import pymotion.rotations.quat_torch as quat_torch
 import pymotion.ops.skeleton_torch as skeleton_torch
-from torch.optim.lr_scheduler import ReduceLROnPlateau, CosineAnnealingWarmRestarts
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 import numpy
 
 
-def compute_loss(pred, tgt_graph, src_graph, parents_t, offsets_t,
-                 rot_loss_fn, pos_loss_fn, pos_weight, config):
-    bone_length_dim = config.bone_length_dim
+class GroupedSkeletonBatchSampler(Sampler):
+    def __init__(self, skeleton_ids, batch_size, shuffle=True, drop_last=False):
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+        self.drop_last = drop_last
+
+        from collections import defaultdict
+        self.groups = defaultdict(list)
+        for idx, sid in enumerate(skeleton_ids):
+            self.groups[sid].append(idx)
+
+    def __iter__(self):
+        all_batches = []
+        for sid, indices in self.groups.items():
+            if self.shuffle:
+                indices = indices.copy()
+                random.shuffle(indices)
+            for i in range(0, len(indices), self.batch_size):
+                batch = indices[i:i + self.batch_size]
+                if self.drop_last and len(batch) < self.batch_size:
+                    continue
+                all_batches.append(batch)
+        if self.shuffle:
+            random.shuffle(all_batches)
+        yield from all_batches
+
+    def __len__(self):
+        total = 0
+        for sid, indices in self.groups.items():
+            n = len(indices)
+            if self.drop_last:
+                total += n // self.batch_size
+            else:
+                total += (n + self.batch_size - 1) // self.batch_size
+        return total
+
+
+def compute_loss(pred, tgt_graph, src_graph,
+                 rot_loss_fn, pos_loss_fn, pos_weight, smooth_weight, config):
     rotation_dim = config.rotation_dim
     feature_dim = rotation_dim
     gen_frames = config.gen_frames
+    context_length = config.context_length
 
-    gt_seq_flat = tgt_graph.x[:, bone_length_dim:bone_length_dim + gen_frames * feature_dim]
+    gt_seq_flat = tgt_graph.x[:, 0:gen_frames * feature_dim]
 
     BJ = pred.shape[0]
     B = int(src_graph.batch.max().item()) + 1 if hasattr(src_graph, 'batch') else 1
@@ -46,17 +85,42 @@ def compute_loss(pred, tgt_graph, src_graph, parents_t, offsets_t,
     pred_quat_tm = pred_quat.permute(0, 2, 1, 3)
     gt_quat_tm = gt_quat.permute(0, 2, 1, 3)
 
-    offsets_bt = offsets_t.view(1, 1, J, 3).expand(B, gen_frames, J, 3)
+    parents_t = src_graph.parents[:J]
+
+    offsets_b = src_graph.offsets.view(B, J, 3)
+    offsets_bt = offsets_b.unsqueeze(1).expand(B, gen_frames, J, 3)
+
     global_pos = torch.zeros((B, gen_frames, 3), device=pred.device, dtype=pred.dtype)
 
-    pred_pos_tm, _ = skeleton_torch.fk(pred_quat_tm, global_pos, offsets_bt, parents_t)
-    gt_pos_tm, _ = skeleton_torch.fk(gt_quat_tm, global_pos, offsets_bt, parents_t)
+    pred_pos, _ = skeleton_torch.fk(pred_quat_tm, global_pos, offsets_bt, parents_t)
+    gt_pos, _ = skeleton_torch.fk(gt_quat_tm, global_pos, offsets_bt, parents_t)
 
-    pos_loss = pos_loss_fn(pred_pos_tm, gt_pos_tm)
+    pos_loss = pos_loss_fn(pred_pos, gt_pos)
 
-    total_loss = rot_loss + pos_weight * pos_loss
+    # Smoothness loss
+    src_seq_flat = src_graph.x[:, 0:context_length * feature_dim]
+    src_seq = src_seq_flat.view(B, J, context_length, feature_dim)
+    last_ctx_rot6 = src_seq[:, :, -1, :]  # (B, J, feature_dim)
 
-    return total_loss, rot_loss, pos_loss * pos_weight
+    last_ctx_R = sixd_torch.to_matrix(last_ctx_rot6.reshape(-1, 3, 2)).view(B, J, 1, 3, 3)
+    last_ctx_quat = quat_torch.from_matrix(last_ctx_R.reshape(-1, 3, 3)).view(B, J, 1, 4)
+    last_ctx_quat_tm = last_ctx_quat.permute(0, 2, 1, 3)  # (B, 1, J, 4)
+
+    offsets_bt_single = offsets_b.unsqueeze(1)  # (B, 1, J, 3)
+    global_pos_single = torch.zeros((B, 1, 3), device=pred.device, dtype=pred.dtype)
+
+    last_ctx_pos, _ = skeleton_torch.fk(last_ctx_quat_tm, global_pos_single, offsets_bt_single, parents_t)
+
+    pred_pos_with_ctx = torch.cat([last_ctx_pos, pred_pos], dim=1)  # (B, gen_frames+1, J, 3)
+    gt_pos_with_ctx = torch.cat([last_ctx_pos, gt_pos], dim=1)  # (B, gen_frames+1, J, 3)
+
+    pred_vel = pred_pos_with_ctx[:, 1:, :, :] - pred_pos_with_ctx[:, :-1, :, :]  # (B, gen_frames, J, 3)
+    gt_vel = gt_pos_with_ctx[:, 1:, :, :] - gt_pos_with_ctx[:, :-1, :, :]
+    smooth_loss = pos_loss_fn(pred_vel, gt_vel)
+
+    total_loss = rot_loss + pos_weight * pos_loss + smooth_weight * smooth_loss
+
+    return total_loss, rot_loss, pos_loss * pos_weight, smooth_loss * smooth_weight
 
 if __name__ == "__main__":
     start_time = time.strftime("%Y%m%d-%H%M%S")
@@ -73,12 +137,6 @@ if __name__ == "__main__":
         config.logs_dir, f"model_{start_time}_training.log"
     )
 
-    # logging.basicConfig(
-    #     level=logging.INFO,
-    #     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    #     stream=sys.stdout,
-    # )
-
     logger = logging.getLogger("train")
     logger.setLevel(logging.INFO)
 
@@ -93,35 +151,58 @@ if __name__ == "__main__":
     logger.addHandler(fh)
     logger.addHandler(ch)
 
-    dataset = BVHMotionDataset("./datasets/lafan1train", context=context, step=context)
+    dataset = BVHMotionDataset(config.train_data_paths,
+                               context=context, step=config.step_size)
 
     val_ratio = 0.2
     total = len(dataset)
+    all_indices = list(range(total))
+    random.shuffle(all_indices)
     val_size = int(total * val_ratio)
-    train_size = total - val_size
+    val_indices = set(all_indices[:val_size])
+    train_indices = [i for i in range(total) if i not in val_indices]
+    val_indices = list(val_indices)
 
-    train_set, val_set = torch.utils.data.random_split(dataset, [train_size, val_size])
+    batch_size = 512
 
-    batch_size = 128
+    train_skel_ids = [dataset.sample_skel[i] for i in train_indices]
+    val_skel_ids = [dataset.sample_skel[i] for i in val_indices]
 
-    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True,
+    train_sampler = GroupedSkeletonBatchSampler(
+        skeleton_ids=train_skel_ids, batch_size=batch_size, shuffle=True
+    )
+    val_sampler = GroupedSkeletonBatchSampler(
+        skeleton_ids=val_skel_ids, batch_size=batch_size, shuffle=False
+    )
+
+    train_set = torch.utils.data.Subset(dataset, train_indices)
+    val_set = torch.utils.data.Subset(dataset, val_indices)
+
+    train_loader = DataLoader(train_set, batch_sampler=train_sampler,
                               num_workers=4, pin_memory=True, persistent_workers=True)
-    val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False,
+    val_loader = DataLoader(val_set, batch_sampler=val_sampler,
                             num_workers=4, pin_memory=True, persistent_workers=True)
 
     model = Model().to(device)
+
+    logger.info(f"Using config:  {config.config_file}")
+
+    if config.checkpoint_path is not None and len(config.checkpoint_path) > 0:
+        logger.info(f"Resuming from checkpoint: {config.checkpoint_path}")
+        checkpoint = torch.load(config.checkpoint_path, map_location=device)
+        model.load_state_dict(checkpoint)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
     scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10,
                                   threshold=config.early_stopping_min_delta, threshold_mode='abs')
-    #scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=20, T_mult=2)
 
     rot_loss_fn = GeodesicLoss(reduction='mean')
     pos_loss_fn = torch.nn.MSELoss(reduction='mean')
 
     logger.info(
-        f"Train size: {len(train_loader) * batch_size}, Validation size: {len(val_loader) * batch_size}"
+        f"Train size: {len(train_indices)}, Validation size: {len(val_indices)}, "
+        f"Unique skeletons: {len(dataset._skel_key_to_id)}"
     )
 
     rotation_dim = config.rotation_dim
@@ -129,6 +210,7 @@ if __name__ == "__main__":
     gen_frames = config.gen_frames
 
     pos_weight = config.pos_weight
+    smooth_weight = getattr(config, 'smooth_weight', 0.1)
 
     patience = config.early_stopping_patience
     min_delta = config.early_stopping_min_delta
@@ -136,8 +218,6 @@ if __name__ == "__main__":
     best_val = float('inf')
     epochs_no_improve = 0
 
-    parents_t = torch.tensor(dataset.parents, device=device).long()
-    offsets_t = torch.tensor(dataset.offsets, device=device).float()
     scaler = GradScaler('cuda')
 
     for epoch in range(config.epochs):
@@ -145,66 +225,77 @@ if __name__ == "__main__":
         train_loss = 0.0
         train_rot_loss = 0.0
         train_pos_loss = 0.0
+        steps = 0
 
-        for src_graph, lastframe_graph, tgt_graph in train_loader:
+        for src_graph, tgt_graph in train_loader:
             src_graph = src_graph.to(device)
-            lastframe_graph = lastframe_graph.to(device)
             tgt_graph = tgt_graph.to(device)
 
             optimizer.zero_grad()
 
             with autocast('cuda'):
-                pred = model(src_graph, lastframe_graph)
-                loss, rot_loss, pos_loss = compute_loss(
-                    pred, tgt_graph, src_graph, parents_t, offsets_t,
-                    rot_loss_fn, pos_loss_fn, pos_weight, config
+                pred = model(src_graph)
+                loss, rot_loss, pos_loss, smooth_loss = compute_loss(
+                    pred, tgt_graph, src_graph,
+                    rot_loss_fn, pos_loss_fn, pos_weight, smooth_weight, config
                 )
+
+            if torch.isnan(loss) or torch.isinf(loss):
+                logger.warning(f"NaN/Inf loss detected at epoch {epoch + 1}. Skipping batch to prevent weight corruption.")
+                continue
 
             scaler.scale(loss).backward()
             scaler.unscale_(optimizer)
-            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=config.grad_clip_norm)
             scaler.step(optimizer)
             scaler.update()
 
             train_loss += loss.item()
             train_rot_loss += rot_loss.item()
             train_pos_loss += pos_loss.item()
+            steps += 1
 
-        train_loss /= len(train_loader)
-        train_rot_loss /= len(train_loader)
-        train_pos_loss /= len(train_loader)
+        if steps > 0:
+            train_loss /= steps
+            train_rot_loss /= steps
+            train_pos_loss /= steps
+        else:
+            logger.warning(f"Epoch {epoch + 1}: All batches resulted in NaN/Inf loss!")
 
         model.eval()
         val_loss = 0.0
         val_rot_loss = 0.0
         val_pos_loss = 0.0
+        val_smooth_loss = 0.0
 
         with torch.no_grad():
-            for src_graph, lastframe_graph, tgt_graph in val_loader:
+            for src_graph, tgt_graph in val_loader:
                 src_graph = src_graph.to(device)
-                lastframe_graph = lastframe_graph.to(device)
                 tgt_graph = tgt_graph.to(device)
 
                 with autocast('cuda'):
-                    pred = model(src_graph, lastframe_graph)
-                    loss, rot_loss, pos_loss = compute_loss(
-                        pred, tgt_graph, src_graph, parents_t, offsets_t,
-                        rot_loss_fn, pos_loss_fn, pos_weight, config
+                    pred = model(src_graph)
+                    loss, rot_loss, pos_loss, smooth_loss = compute_loss(
+                        pred, tgt_graph, src_graph,
+                        rot_loss_fn, pos_loss_fn, pos_weight, smooth_weight, config
                     )
                 val_loss += loss.item()
                 val_rot_loss += rot_loss.item()
                 val_pos_loss += pos_loss.item()
+                val_smooth_loss += smooth_loss.item()
 
         val_loss /= len(val_loader)
         val_rot_loss /= len(val_loader)
         val_pos_loss /= len(val_loader)
+        val_smooth_loss /= len(val_loader)
 
         scheduler.step(val_loss)
 
         current_lr = optimizer.param_groups[0]['lr']
 
         logger.info(
-            f"Epoch {epoch + 1:03d} | Train Loss: {train_loss:.6f} (rot: {train_rot_loss:.6f}, pos: {train_pos_loss:.6f}) | Val Loss: {val_loss:.6f} (rot: {val_rot_loss:.6f}, pos: {val_pos_loss:.6f}) | LR: {current_lr:.2e}"
+            f"Epoch {epoch + 1:03d} | Train Loss: {train_loss:.6f} (rot: {train_rot_loss:.6f}, pos: {train_pos_loss:.6f}) | "
+            f"Val Loss: {val_loss:.6f} (rot: {val_rot_loss:.6f}, pos: {val_pos_loss:.6f}, smooth: {val_smooth_loss:.6f}) | LR: {current_lr:.2e}"
         )
 
         if (epoch + 1) % ckpt_interval == 0:
