@@ -1,0 +1,27 @@
+{
+    "rotation_dim": 6,
+    "bone_length_dim": 1,
+    "context_length": 50,
+    "step_size": 5,
+    "gen_frames": 15,
+    "hid_lyrs": [256, 256, 128, 128, 96, 96],
+    "head_num": 8,
+    "tgt_all_lyr": true,
+    "dropout": 0.05,
+    "epochs": 1000,
+    "pos_weight": 0.007,
+    "grad_clip_norm": 1.0,
+    "early_stopping_patience": 20,
+    "early_stopping_min_delta": 0.001,
+    "checkpoint_interval": 10,
+    "logs_dir": "./logs",
+    "checkpoints_dir": "./checkpoints",
+    "smooth_weight": 0.005,
+    "checkpoint_path": "",
+    "train_data_paths": [
+        "./data/train/lafan1_full"
+    ],
+    "eval_data_paths": [
+        "./data/eval/lafan1"
+    ]
+}

@@ -185,7 +185,7 @@ if __name__ == "__main__":
 
     model = Model().to(device)
 
-    logger.info(f"Using config:  {config.config_file}")
+    logger.info(f"Using config: {config.config_file}")
 
     if config.checkpoint_path is not None and len(config.checkpoint_path) > 0:
         logger.info(f"Resuming from checkpoint: {config.checkpoint_path}")

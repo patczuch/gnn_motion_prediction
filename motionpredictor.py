@@ -18,6 +18,7 @@ class Model(torch.nn.Module):
 
         convs = []
         norms = []
+        residual_projs = []
         current_dim = layer_dims[0]
 
         for i, out_channels in enumerate(layer_dims[1:]):
@@ -34,13 +35,23 @@ class Model(torch.nn.Module):
                 )
             )
 
-            current_dim = out_channels * heads
+            next_dim = out_channels * heads
 
             if not is_last:
-                norms.append(torch.nn.LayerNorm(current_dim))
+                if current_dim != next_dim:
+                    residual_projs.append(torch.nn.Linear(current_dim, next_dim))
+                else:
+                    residual_projs.append(None)
+                norms.append(torch.nn.LayerNorm(next_dim))
+
+            current_dim = next_dim
 
         self.convs = torch.nn.ModuleList(convs)
         self.norms = torch.nn.ModuleList(norms)
+        self.residual_projs = torch.nn.ModuleList(
+            [p if p is not None else torch.nn.Identity() for p in residual_projs]
+        )
+        self._residual_is_identity = [p is None for p in residual_projs]
         self.activation = torch.nn.LeakyReLU()
         self.eps = 1e-8
         self.std_min = 1e-4
@@ -66,9 +77,12 @@ class Model(torch.nn.Module):
 
         norm_idx = 0
         for i, conv in enumerate(self.convs):
+            x_prev = x
             x = conv(x, edge_index)
             if i + 1 != len(self.convs):
                 x = self.norms[norm_idx](x)
+                # Residual connection
+                x = x + self.residual_projs[norm_idx](x_prev)
                 norm_idx += 1
                 x = self.activation(x)
 
