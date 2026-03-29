@@ -18,6 +18,7 @@ class BVHMotionDataset(Dataset):
         self.samples = []       # (filepath, start)
         self.sample_skel = []   # skeleton_id per sample
         self.cache = {}
+        self.root_pos_cache = {}
         self.skeleton_cache = {}
         self._skel_key_to_id = {}
         self.get_cache = []
@@ -87,6 +88,13 @@ class BVHMotionDataset(Dataset):
                     feats = torch.cat([rot6], dim=-1)
 
                 self.cache[filepath] = feats
+
+                # Cache root positions: (F, 3)
+                root_positions = torch.from_numpy(
+                    local_positions[:, 0, :].copy()
+                ).float()
+                self.root_pos_cache[filepath] = root_positions
+
                 F = feats.shape[0]
 
                 for start in range(0, F - (self.context + self.context), self.step):
@@ -115,6 +123,7 @@ class BVHMotionDataset(Dataset):
 
         filepath, start = self.samples[idx]
         feats = self.cache[filepath]
+        root_positions = self.root_pos_cache[filepath]
         skeleton = self.skeleton_cache[filepath]
         edges = skeleton["edges"]
 
@@ -132,13 +141,28 @@ class BVHMotionDataset(Dataset):
         context = torch.cat([context], dim=1)
         target = torch.cat([target], dim=1)
 
+        # Root positions for context and target
+        root_pos_window = root_positions[start:start + H + gen_frames]  # (H+gen_frames, 3)
+        root_pos_origin = root_pos_window[0:1]  # (1, 3) — first context frame
+        root_pos_window = root_pos_window - root_pos_origin  # delta from first frame
+
+        root_pos_context = root_pos_window[:H].reshape(H * 3)           # (H*3,)
+        root_pos_target = root_pos_window[H:H + gen_frames].reshape(gen_frames * 3)  # (gen_frames*3,)
+
         batch = torch.zeros(J, dtype=torch.long)
 
         parents_t = torch.tensor(skeleton["parents"], dtype=torch.long)
         offsets_t = torch.from_numpy(skeleton["offsets"]).float()
 
-        src_graph = Data(x=context, edge_index=edges, batch=batch, parents=parents_t, offsets=offsets_t)
-        tgt_graph = Data(x=target, edge_index=edges, batch=batch)
+        src_graph = Data(
+            x=context, edge_index=edges, batch=batch,
+            parents=parents_t, offsets=offsets_t,
+            root_pos=root_pos_context,
+        )
+        tgt_graph = Data(
+            x=target, edge_index=edges, batch=batch,
+            root_pos=root_pos_target,
+        )
 
         self.get_cache[idx] = (src_graph, tgt_graph)
         return src_graph, tgt_graph

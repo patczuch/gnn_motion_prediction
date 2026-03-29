@@ -29,7 +29,7 @@ def npss(pred_signal: np.ndarray, gt_signal: np.ndarray) -> float:
 def run_benchmark():
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    checkpoint_path = "./checkpoints/model_20260324-101338-best.pth"
+    checkpoint_path = "./checkpoints/model_20260329-160339-best.pth"
     model_name = os.path.splitext(os.path.basename(checkpoint_path))[0]
     dataset_paths = config.eval_data_paths
     context = config.context_length
@@ -65,6 +65,7 @@ def run_benchmark():
         for idx in range(len(dataset)):
             filepath, start = dataset.samples[idx]
             feats = dataset.cache[filepath]  # (F, J, C)
+            root_positions = dataset.root_pos_cache[filepath]  # (F, 3)
             skeleton = dataset.get_skeleton(filepath)
             J = feats.shape[1]
 
@@ -75,60 +76,79 @@ def run_benchmark():
             all_gt = feats[start: start + total_frames]  # (total_frames, J, C)
             all_gt_rot = all_gt[:, :, :rotation_dim]      # (total_frames, J, rotation_dim)
 
+            # --- Prepare root positions (delta from first context frame) ---
+            root_pos_window = root_positions[start:start + total_frames]  # (total_frames, 3)
+            root_pos_origin = root_pos_window[0:1]  # (1, 3)
+            root_pos_window_delta = root_pos_window - root_pos_origin
+
+            root_pos_context = root_pos_window_delta[:context].reshape(context * 3)  # (context*3,)
+            root_pos_gt_delta = root_pos_window_delta[context:context + gen_frames]  # (gen_frames, 3)
+
             # --- Run model ---
             context_frames = all_gt_rot[:context]  # (context, J, rotation_dim)
             x_input = context_frames.permute(1, 0, 2).reshape(J, -1).to(device)
             edge_index = skeleton["edges"].to(device)
             batch = torch.zeros(J, dtype=torch.long, device=device)
-            src_graph = Data(x=x_input, edge_index=edge_index, batch=batch)
+            src_graph = Data(
+                x=x_input, edge_index=edge_index, batch=batch,
+                root_pos=root_pos_context.to(device),
+            )
 
-            pred = model(src_graph)  # (J, gen_frames * rotation_dim)
-            pred_seq = pred.view(J, gen_frames, rotation_dim)  # (J, gen_frames, rotation_dim)
+            pred_rot, pred_root_pos = model(src_graph)
+            pred_seq = pred_rot.view(J, gen_frames, rotation_dim)  # (J, gen_frames, rotation_dim)
+
+            # Predicted root pos delta: (1, gen_frames, 3)
+            pred_root_pos_delta = pred_root_pos.view(1, gen_frames, 3)
+            # GT root pos delta: (1, gen_frames, 3)
+            gt_root_pos_delta = root_pos_gt_delta.unsqueeze(0).to(device)
 
             gt_gen_rot = all_gt_rot[context: context + gen_frames].to(device)  # (gen_frames, J, rotation_dim)
             gt_seq = gt_gen_rot.permute(1, 0, 2)  # (J, gen_frames, rotation_dim)
 
-            pred_mat = sixd_torch.to_matrix(pred_seq.reshape(-1, 3, 2))  # (J*gen_frames, 3, 3)
-
+            pred_mat = sixd_torch.to_matrix(pred_seq.reshape(-1, 3, 2))
             gt_mat = sixd_torch.to_matrix(gt_seq.reshape(-1, 3, 2))
 
-            # Quaternions: (J, gen_frames, 4)
             pred_quat = quat_torch.from_matrix(pred_mat).view(J, gen_frames, 4)
             gt_quat = quat_torch.from_matrix(gt_mat).view(J, gen_frames, 4)
 
             parents_t = torch.tensor(skeleton["parents"], device=device).long()
-            offsets_t = torch.tensor(skeleton["offsets"], device=device).to(pred.dtype)
+            offsets_t = torch.tensor(skeleton["offsets"], device=device).to(pred_rot.dtype)
 
             bone_lengths = offsets_t.norm(dim=-1).unsqueeze(0)  # (1, J)
 
-            # For FK: (1, gen_frames, J, 4) and offsets (1, gen_frames, J, 3)
-            pred_quat_fk = pred_quat.unsqueeze(0).permute(0, 2, 1, 3)  # (1, gen_frames, J, 4)
+            pred_quat_fk = pred_quat.unsqueeze(0).permute(0, 2, 1, 3)
             gt_quat_fk = gt_quat.unsqueeze(0).permute(0, 2, 1, 3)
 
             offsets_fk = offsets_t.unsqueeze(0).unsqueeze(0).expand(1, gen_frames, J, 3)
-            global_pos_zero = torch.zeros((1, gen_frames, 3), device=device, dtype=pred.dtype)
 
-            pred_pos_fk, _ = skeleton_torch.fk(pred_quat_fk, global_pos_zero, offsets_fk, parents_t)
-            gt_pos_fk, _ = skeleton_torch.fk(gt_quat_fk, global_pos_zero, offsets_fk, parents_t)
-            # pred_pos_fk, gt_pos_fk: (1, gen_frames, J, 3)
+            # Use predicted/gt root pos deltas converted back to absolute for FK
+            pred_global_pos = pred_root_pos_delta  # (1, gen_frames, 3)
+            gt_global_pos = gt_root_pos_delta      # (1, gen_frames, 3)
 
-            ctx_gt_rot = all_gt_rot[:context].to(device)  # (context, J, rotation_dim)
+            pred_pos_fk, _ = skeleton_torch.fk(pred_quat_fk, pred_global_pos, offsets_fk, parents_t)
+            gt_pos_fk, _ = skeleton_torch.fk(gt_quat_fk, gt_global_pos, offsets_fk, parents_t)
+
+            # Full sequence for MDC/MDCSS
+            ctx_gt_rot = all_gt_rot[:context].to(device)
             ctx_mat = sixd_torch.to_matrix(ctx_gt_rot.reshape(-1, 3, 2))
             ctx_quat = quat_torch.from_matrix(ctx_mat).view(context, J, 4)
 
-            full_pred_quat = torch.cat([ctx_quat, pred_quat.permute(1, 0, 2)], dim=0)  # (total_frames, J, 4)
+            full_pred_quat = torch.cat([ctx_quat, pred_quat.permute(1, 0, 2)], dim=0)
             full_gt_quat_raw = sixd_torch.to_matrix(all_gt_rot.to(device).reshape(-1, 3, 2))
             full_gt_quat = quat_torch.from_matrix(full_gt_quat_raw).view(total_frames, J, 4)
 
-            full_pred_quat_fk = full_pred_quat.unsqueeze(0)  # (1, total_frames, J, 4)
+            full_pred_quat_fk = full_pred_quat.unsqueeze(0)
             full_gt_quat_fk = full_gt_quat.unsqueeze(0)
 
             offsets_full = offsets_t.unsqueeze(0).unsqueeze(0).expand(1, total_frames, J, 3)
-            global_pos_full = torch.zeros((1, total_frames, 3), device=device, dtype=pred.dtype)
 
-            full_pred_pos, _ = skeleton_torch.fk(full_pred_quat_fk, global_pos_full, offsets_full, parents_t)
-            full_gt_pos, _ = skeleton_torch.fk(full_gt_quat_fk, global_pos_full, offsets_full, parents_t)
-            # (1, total_frames, J, 3)
+            # Full root pos: context (gt delta) + generated (pred/gt delta)
+            ctx_root_delta = root_pos_window_delta[:context].to(device)  # (context, 3)
+            full_pred_root = torch.cat([ctx_root_delta, pred_root_pos_delta.squeeze(0)], dim=0).unsqueeze(0)  # (1, total_frames, 3)
+            full_gt_root = root_pos_window_delta.to(device).unsqueeze(0)  # (1, total_frames, 3)
+
+            full_pred_pos, _ = skeleton_torch.fk(full_pred_quat_fk, full_pred_root, offsets_full, parents_t)
+            full_gt_pos, _ = skeleton_torch.fk(full_gt_quat_fk, full_gt_root, offsets_full, parents_t)
 
             for case in cases:
                 if case == "no_root":

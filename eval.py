@@ -18,7 +18,7 @@ import config
 if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    checkpoint_path = "./checkpoints/model_20260324-101338-best.pth"
+    checkpoint_path = "./checkpoints/model_20260329-163748-best.pth"
     dataset_paths = config.eval_data_paths
 
     out_dir = "./eval_results"
@@ -54,6 +54,7 @@ if __name__ == "__main__":
         for idx in test_indices:
             filepath, start = dataset.samples[idx]
             feats = dataset.cache[filepath]  # (F, J, C)
+            root_positions = dataset.root_pos_cache[filepath]  # (F, 3)
             skeleton = dataset.get_skeleton(filepath)
             J = feats.shape[1]
 
@@ -62,8 +63,15 @@ if __name__ == "__main__":
                 continue
 
             all_gt = feats[start : start + total_frames]  # (total_frames, J, C)
+            all_gt_rot = all_gt[:, :, :rotation_dim]
 
-            all_gt_rot = all_gt[:, :, :rotation_dim]  # (total_frames, J, rotation_dim)
+            # --- Root positions (delta from first context frame) ---
+            root_pos_window = root_positions[start:start + total_frames]  # (total_frames, 3)
+            root_pos_origin = root_pos_window[0:1]  # (1, 3)
+            root_pos_window_delta = root_pos_window - root_pos_origin
+
+            root_pos_context = root_pos_window_delta[:context].reshape(context * 3)
+            root_pos_gt_delta = root_pos_window_delta[context:context + gen_frames]  # (gen_frames, 3)
 
             all_gt_rot_orig = all_gt[:, :, :rotation_dim]
 
@@ -93,10 +101,16 @@ if __name__ == "__main__":
             x_input = context_frames.permute(1, 0, 2).reshape(J, -1).to(device)
             edge_index = skeleton["edges"].to(device)
             batch = torch.zeros(J, dtype=torch.long, device=device)
-            src_graph = Data(x=x_input, edge_index=edge_index, batch=batch)
+            src_graph = Data(
+                x=x_input, edge_index=edge_index, batch=batch,
+                root_pos=root_pos_context.to(device),
+            )
 
-            pred = model(src_graph)
-            pred_seq = pred.view(J, gen_frames, rotation_dim)
+            pred_rot, pred_root_pos = model(src_graph)
+            pred_seq = pred_rot.view(J, gen_frames, rotation_dim)
+
+            # Predicted root pos delta: (gen_frames, 3)
+            pred_root_pos_delta = pred_root_pos.view(gen_frames, 3)
 
             gt_start = context
             gt_end = gt_start + gen_frames
@@ -134,13 +148,15 @@ if __name__ == "__main__":
                 gt_quat_tm = gt_quat.permute(0, 2, 1, 3)
 
                 parents_t = torch.tensor(skeleton["parents"], device=device).long()
-                offsets_t = torch.tensor(skeleton["offsets"], device=device).to(pred.dtype)
+                offsets_t = torch.tensor(skeleton["offsets"], device=device).to(pred_rot.dtype)
                 offsets_bt = offsets_t.view(1, 1, J, 3).expand(1, n_so_far, J, 3)
 
-                global_pos = torch.zeros((1, n_so_far, 3), device=device, dtype=pred.dtype)
+                # Use predicted/gt root pos deltas for FK
+                pred_global_pos = pred_root_pos_delta[:n_so_far].unsqueeze(0)  # (1, n_so_far, 3)
+                gt_global_pos = root_pos_gt_delta[:n_so_far].to(device).unsqueeze(0)  # (1, n_so_far, 3)
 
-                pred_pos_tm, _ = skeleton_torch.fk(pred_quat_tm, global_pos, offsets_bt, parents_t)
-                gt_pos_tm, _ = skeleton_torch.fk(gt_quat_tm, global_pos, offsets_bt, parents_t)
+                pred_pos_tm, _ = skeleton_torch.fk(pred_quat_tm, pred_global_pos, offsets_bt, parents_t)
+                gt_pos_tm, _ = skeleton_torch.fk(gt_quat_tm, gt_global_pos, offsets_bt, parents_t)
 
                 pos_loss = pos_weight * pos_loss_fn(pred_pos_tm, gt_pos_tm)
                 loss = rot_loss + pos_loss
@@ -177,6 +193,19 @@ if __name__ == "__main__":
                 np.tile(skeleton["rot_order"], (T_total, 1, 1)),
             ) * 180 / math.pi
 
+            # Build root positions for BVH export (absolute)
+            # Context: GT absolute, Generated: predicted delta + origin
+            ctx_root_abs = root_pos_window[:context].numpy()  # (context, 3) — absolute
+            pred_root_abs = (pred_root_pos_delta.cpu() + root_pos_origin).numpy()  # (gen_frames, 3)
+            gt_root_abs = root_pos_window.numpy()  # (total_frames, 3) — absolute
+
+            bvh_positions_gen = np.zeros((total_frames, len(skeleton["names"]), 3))
+            bvh_positions_gen[:context, 0, :] = ctx_root_abs
+            bvh_positions_gen[context:, 0, :] = pred_root_abs
+
+            bvh_positions_gt = np.zeros((total_frames, len(skeleton["names"]), 3))
+            bvh_positions_gt[:, 0, :] = gt_root_abs
+
             bvh_gen = BVH()
             bvh_gen.data = {
                 "names": skeleton["names"],
@@ -185,7 +214,7 @@ if __name__ == "__main__":
                 "end_sites_parents": skeleton["end_sites_parents"],
                 "parents": skeleton["parents"],
                 "rot_order": skeleton["rot_order"],
-                "positions": np.zeros((total_frames, len(skeleton["names"]), 3)),
+                "positions": bvh_positions_gen,
                 "rotations": eulers,
                 "frame_time": skeleton["frame_time"],
             }
@@ -198,7 +227,7 @@ if __name__ == "__main__":
                 "end_sites_parents": skeleton["end_sites_parents"],
                 "parents": skeleton["parents"],
                 "rot_order": skeleton["rot_order"],
-                "positions": np.zeros((total_frames, len(skeleton["names"]), 3)),
+                "positions": bvh_positions_gt,
                 "rotations": eulers_gt,
                 "frame_time": skeleton["frame_time"],
             }
