@@ -18,7 +18,7 @@ import config
 if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    checkpoint_path = "./checkpoints/model_20260329-163748-best.pth"
+    checkpoint_path = "./checkpoints/model_20260331-080031-best.pth"
     dataset_paths = config.eval_data_paths
 
     out_dir = "./eval_results"

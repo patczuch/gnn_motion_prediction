@@ -49,7 +49,6 @@ class Model(torch.nn.Module):
         self.residual_projs = torch.nn.ModuleList(
             [p if p is not None else torch.nn.Identity() for p in residual_projs]
         )
-        self._residual_is_identity = [p is None for p in residual_projs]
         self.activation = torch.nn.LeakyReLU()
 
         # Rotation head (per-joint output)
@@ -78,31 +77,17 @@ class Model(torch.nn.Module):
         edge_index = src_graph.edge_index
         batch = src_graph.batch if hasattr(src_graph, 'batch') and src_graph.batch is not None else torch.zeros(x.size(0), dtype=torch.long, device=x.device)
 
-        # Per-sample z-score normalization (scalar mean/std per graph)
-        node_mean = x.mean(dim=1, keepdim=True)
-        graph_mean = scatter(node_mean, batch, dim=0, reduce='mean')
-        node_var = ((x - node_mean) ** 2).mean(dim=1, keepdim=True)
-        graph_var = scatter(node_var, batch, dim=0, reduce='mean')
-        graph_std = (graph_var + self.eps).sqrt()
-
-        sample_mean = graph_mean[batch]
-        sample_std = graph_std[batch].clamp(min=self.std_min)
-
-        x = (x - sample_mean) / sample_std
-        x = x.clamp(-self.value_clamp, self.value_clamp)
-
         # Shared trunk
         for i, conv in enumerate(self.convs):
             x_prev = x
             x = conv(x, edge_index)
-            x = self.norms[i](x)
             x = x + self.residual_projs[i](x_prev)
+            x = self.norms[i](x)
             x = self.activation(x)
 
         # Rotation head (per-joint)
         rot_out = self.rot_head(x, edge_index)
         rot_out = rot_out.clamp(-self.value_clamp, self.value_clamp)
-        rot_out = rot_out * sample_std + sample_mean
 
         # Root position head (graph-level)
         graph_feats = scatter(x, batch, dim=0, reduce='mean')  # (B, trunk_dim)

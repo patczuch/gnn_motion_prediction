@@ -60,6 +60,18 @@ class BVHMotionDataset(Dataset):
                     np.linalg.norm(offsets, axis=1, keepdims=True)
                 ).float()
 
+                J = parents.shape[0]
+                ancestor_counts = torch.zeros(J, dtype=torch.float32)
+
+                for j in range(J):
+                    p = parents[j].item()
+                    while p != 0:
+                        ancestor_counts[j] += 1
+                        p = parents[p].item()
+
+                joint_weights = 1.0 / (1.0 + ancestor_counts)  # shape [J]
+                joint_weights = joint_weights.view(1, 1, J, 1)  # reshape for broadcasting
+
                 self.skeleton_cache[filepath] = {
                     "offsets": offsets,
                     "parents": parents,
@@ -70,6 +82,7 @@ class BVHMotionDataset(Dataset):
                     "frame_time": bvh.data["frame_time"],
                     "edges": edges,
                     "bone_lengths": bone_lengths,
+                    "joint_weights": joint_weights
                 }
 
                 skel_key = (len(parents), tuple(parents))
@@ -97,7 +110,7 @@ class BVHMotionDataset(Dataset):
 
                 F = feats.shape[0]
 
-                for start in range(0, F - (self.context + self.context), self.step):
+                for start in range(0, F - (self.context + config.gen_frames), self.step):
                     self.samples.append((filepath, start))
                     self.sample_skel.append(skel_id)
 
@@ -113,9 +126,6 @@ class BVHMotionDataset(Dataset):
 
     def get_skeleton_id(self, idx):
         return self.sample_skel[idx]
-
-    def get_yaw(self, idx):
-        return float(self.sample_yaw[idx])
 
     def __getitem__(self, idx):
         if self.get_cache[idx] is not None:
@@ -156,7 +166,7 @@ class BVHMotionDataset(Dataset):
 
         src_graph = Data(
             x=context, edge_index=edges, batch=batch,
-            parents=parents_t, offsets=offsets_t,
+            parents=parents_t, offsets=offsets_t, joint_weights=skeleton["joint_weights"],
             root_pos=root_pos_context,
         )
         tgt_graph = Data(

@@ -95,7 +95,11 @@ def compute_loss(pred_rot, pred_root_pos, tgt_graph, src_graph,
     pred_pos, _ = skeleton_torch.fk(pred_quat_tm, global_pos, offsets_bt, parents_t)
     gt_pos, _ = skeleton_torch.fk(gt_quat_tm, global_pos, offsets_bt, parents_t)
 
-    pos_loss = pos_loss_fn(pred_pos, gt_pos)
+    # pred_pos, gt_pos: (B, gen_frames, J, 3)
+    pos_diff = pred_pos - gt_pos
+    weighted_sq = (src_graph.joint_weights * pos_diff) ** 2
+
+    pos_loss = weighted_sq.mean()
 
     # Smoothness loss
     src_seq_flat = src_graph.x[:, 0:context_length * feature_dim]

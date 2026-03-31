@@ -10,7 +10,7 @@
     "tgt_all_lyr": true,
     "dropout": 0.05,
     "epochs": 1000,
-    "pos_weight": 0.007,
+    "pos_weight": 0.01,
     "grad_clip_norm": 1.0,
     "early_stopping_patience": 20,
     "early_stopping_min_delta": 0.001,
