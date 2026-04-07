@@ -8,6 +8,7 @@ from pymotion.io.bvh import BVH
 import pymotion.rotations.ortho6d as sixd
 import pymotion.rotations.ortho6d_torch as sixd_torch
 import pymotion.rotations.quat as quat
+import pymotion.ops.skeleton as skeleton_ops
 import config
 
 CHECKPOINT_PATH = "./checkpoints/model_20251228-173213-best.pth"
@@ -29,19 +30,31 @@ def load_bvh_features(bvh_path):
 
     rotations_quat, local_positions, parents, offsets, end_sites, end_sites_parents = bvh.get_data()
 
-    rot6_np = sixd.from_quat(rotations_quat)  # (F, J, 3, 2)
-    rot6 = torch.from_numpy(rot6_np).float()
+    # Compute global rotations via FK
+    F_total = rotations_quat.shape[0]
+    global_pos_np = np.zeros((F_total, 3), dtype=np.float32)
+    offsets_expanded = np.tile(offsets, (F_total, 1, 1))
+    _, global_rotmats = skeleton_ops.fk(
+        rotations_quat, global_pos_np, offsets_expanded, parents
+    )
+    # global_rotmats: (F, J, 3, 3) -> 6D
+    global_6d = global_rotmats[..., :2]  # (F, J, 3, 2)
+    rot6 = torch.from_numpy(global_6d.copy()).float()
     rot6 = rot6.reshape(rot6.shape[0], rot6.shape[1], -1)  # (F, J, 6)
 
-    feats = rot6  # (F, J, 6)
+    feats = rot6  # (F, J, 6) - global rotations
 
     bone_lengths = torch.from_numpy(
         np.linalg.norm(offsets, axis=1, keepdims=True)
     ).float()  # (J, 1)
 
     edges = torch.tensor(
-        [(parents[j], j) for j in range(1, len(parents))]
+        [(parents[j], j) for j in range(1, len(parents))] +
+        [(j, parents[j]) for j in range(1, len(parents))]
     ).t().long()
+
+    # Root positions: (F, 3)
+    root_positions = torch.from_numpy(local_positions[:, 0, :].copy()).float()
 
     bvh_data = {
         "names": bvh.data["names"],
@@ -53,29 +66,7 @@ def load_bvh_features(bvh_path):
         "frame_time": bvh.data["frame_time"],
     }
 
-    return feats, bone_lengths, edges, bvh_data
-
-
-def create_graph(context_rotations, bone_lengths, edges, device):
-    context_length, J, rotation_dim = context_rotations.shape
-
-    context_flat = context_rotations.permute(1, 0, 2).reshape(J, context_length * rotation_dim)
-
-    x = torch.cat([bone_lengths, context_flat], dim=1)  # (J, 1 + context_length * rotation_dim)
-
-    batch = torch.zeros(J, dtype=torch.long, device=device)
-
-    return Data(x=x.to(device), edge_index=edges.to(device), batch=batch)
-
-
-def create_lastframe_graph(last_frame_rotation, bone_lengths, edges, device):
-    J = last_frame_rotation.shape[0]
-
-    x = torch.cat([bone_lengths, last_frame_rotation], dim=1)  # (J, 1 + rotation_dim)
-
-    batch = torch.zeros(J, dtype=torch.long, device=device)
-
-    return Data(x=x.to(device), edge_index=edges.to(device), batch=batch)
+    return feats, bone_lengths, edges, bvh_data, root_positions
 
 
 def normalize_rotation(rot6):
@@ -91,7 +82,6 @@ def main():
     context_length = config.context_length
     gen_frames = config.gen_frames
     rotation_dim = config.rotation_dim
-    bone_length_dim = config.bone_length_dim
 
     num_iterations = math.ceil(NUM_FRAMES_TO_GENERATE / gen_frames)
     actual_generated_frames = num_iterations * gen_frames
@@ -102,8 +92,7 @@ def main():
     print(f"Will generate {actual_generated_frames} frames in {num_iterations} iterations")
 
     print(f"\nLoading BVH file: {INPUT_BVH_PATH}")
-    feats, _, edges, bvh_data = load_bvh_features(INPUT_BVH_PATH)
-    _, bone_lengths, _, _ = load_bvh_features(INPUT_BONE_LENGTHS_BVH_PATH)
+    feats, _, edges, bvh_data, root_positions = load_bvh_features(INPUT_BVH_PATH)
 
     F, J, _ = feats.shape
     print(f"BVH has {F} frames, {J} joints")
@@ -121,7 +110,12 @@ def main():
 
     context_rotations = feats[START_FRAME:START_FRAME + context_length].clone()  # (context_length, J, rotation_dim)
 
+    # Root position handling
+    root_pos_origin = root_positions[START_FRAME:START_FRAME + 1]  # (1, 3)
+    root_pos_context_delta = root_positions[START_FRAME:START_FRAME + context_length] - root_pos_origin
+
     generated_frames = []
+    generated_root_pos = []  # list of (3,) tensors, delta from origin
 
     context_frames_for_output = [
         feats[START_FRAME + f, :, :rotation_dim].clone()
@@ -134,29 +128,43 @@ def main():
         for iteration in range(num_iterations):
             print(f"  Iteration {iteration + 1}/{num_iterations}")
 
-            src_graph = create_graph(context_rotations, bone_lengths, edges, device)
+            # Build root_pos_context for this iteration
+            if iteration == 0:
+                rpc = root_pos_context_delta.reshape(context_length * 3)
+            else:
+                # Use last (context_length) root positions: mix of gt context + generated
+                all_root = torch.cat([root_pos_context_delta] + [g.unsqueeze(0) for g in generated_root_pos], dim=0)
+                rpc = all_root[-context_length:].reshape(context_length * 3)
 
-            last_frame = context_rotations[-1]  # (J, rotation_dim)
-            lastframe_graph = create_lastframe_graph(last_frame, bone_lengths, edges, device)
+            x_input = context_rotations.permute(1, 0, 2).reshape(J, context_length * rotation_dim)
+            batch = torch.zeros(J, dtype=torch.long, device=device)
+            parents_t = torch.tensor(bvh_data["parents"], dtype=torch.long)
+            offsets_t = torch.from_numpy(bvh_data["offsets"]).float()
 
-            pred = model(src_graph, lastframe_graph)  # (J, gen_frames * rotation_dim)
-            pred_seq = pred.view(J, gen_frames, rotation_dim)  # (J, gen_frames, rotation_dim)
+            src_graph = Data(
+                x=x_input.to(device), edge_index=edges.to(device), batch=batch,
+                parents=parents_t, offsets=offsets_t,
+                root_pos=rpc.to(device),
+            )
 
-            for step in range(gen_frames):
-                pred_step = pred_seq[:, step, :]  # (J, rotation_dim)
+            pred_rot, pred_root_pos = model(src_graph)
+            pred_seq = pred_rot.view(J, gen_frames, rotation_dim)
 
-                pred_norm = normalize_rotation(pred_step)
-
-                generated_frames.append(pred_norm.cpu())
-
-            new_context = torch.zeros_like(context_rotations)
-            new_context[:-gen_frames] = context_rotations[gen_frames:]
+            pred_root_pos_delta = pred_root_pos.view(gen_frames, 3).cpu()
 
             for step in range(gen_frames):
                 pred_step = pred_seq[:, step, :]
                 pred_norm = normalize_rotation(pred_step)
-                new_context[-(gen_frames - step)] = pred_norm.cpu()
+                generated_frames.append(pred_norm.cpu())
+                generated_root_pos.append(pred_root_pos_delta[step])
 
+            # Shift context window
+            new_context = torch.zeros_like(context_rotations)
+            new_context[:-gen_frames] = context_rotations[gen_frames:]
+            for step in range(gen_frames):
+                pred_step = pred_seq[:, step, :]
+                pred_norm = normalize_rotation(pred_step)
+                new_context[-(gen_frames - step)] = pred_norm.cpu()
             context_rotations = new_context
 
     print(f"\nGenerated {len(generated_frames)} frames")
@@ -168,14 +176,23 @@ def main():
 
     bvh_rots = torch.stack(all_frames)  # (total_frames, J, rotation_dim)
 
+    # Convert global 6D -> global quats -> local quats for BVH export
     ortho6 = bvh_rots.view(-1, 3, 2).cpu().numpy()
-    quats = sixd.to_quat(ortho6)  # (total_frames * J, 4)
-    quats = quats.reshape(total_frames, J, 4)  # (total_frames, J, 4)
+    global_quats = sixd.to_quat(ortho6).reshape(total_frames, J, 4)
+    local_quats = skeleton_ops.from_global_rotations(global_quats, bvh_data["parents"])
 
     eulers = quat.to_euler(
-        quats,
+        local_quats,
         np.tile(bvh_data["rot_order"], (total_frames, 1, 1)),
     ) * 180 / math.pi
+
+    # Build root positions for BVH export
+    ctx_root_abs = root_positions[START_FRAME:START_FRAME + context_length].numpy()
+    gen_root_abs = torch.stack(generated_root_pos).numpy() + root_pos_origin.numpy()  # (gen_frames_total, 3)
+
+    bvh_positions = np.zeros((total_frames, len(bvh_data["names"]), 3))
+    bvh_positions[:context_length, 0, :] = ctx_root_abs
+    bvh_positions[context_length:, 0, :] = gen_root_abs
 
     bvh_out = BVH()
     bvh_out.data = {
@@ -185,7 +202,7 @@ def main():
         "end_sites_parents": bvh_data["end_sites_parents"],
         "parents": bvh_data["parents"],
         "rot_order": bvh_data["rot_order"],
-        "positions": np.zeros((total_frames, len(bvh_data["names"]), 3)),
+        "positions": bvh_positions,
         "rotations": eulers,
         "frame_time": bvh_data["frame_time"],
     }

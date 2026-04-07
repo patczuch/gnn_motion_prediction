@@ -7,6 +7,7 @@ from dataset import BVHMotionDataset
 import pymotion.rotations.ortho6d_torch as sixd_torch
 import pymotion.rotations.quat_torch as quat_torch
 import pymotion.ops.skeleton_torch as skeleton_torch
+from train import positions_from_global_rotmats
 from mdc_mdcss import torch_mdc_mdcss_metrics
 import config
 
@@ -105,50 +106,55 @@ def run_benchmark():
             gt_gen_rot = all_gt_rot[context: context + gen_frames].to(device)  # (gen_frames, J, rotation_dim)
             gt_seq = gt_gen_rot.permute(1, 0, 2)  # (J, gen_frames, rotation_dim)
 
-            pred_mat = sixd_torch.to_matrix(pred_seq.reshape(-1, 3, 2))
-            gt_mat = sixd_torch.to_matrix(gt_seq.reshape(-1, 3, 2))
+            # Convert global 6D -> rotation matrices
+            pred_mat = sixd_torch.to_matrix(pred_seq.reshape(-1, 3, 2)).view(J, gen_frames, 3, 3)
+            gt_mat = sixd_torch.to_matrix(gt_seq.reshape(-1, 3, 2)).view(J, gen_frames, 3, 3)
 
-            pred_quat = quat_torch.from_matrix(pred_mat).view(J, gen_frames, 4)
-            gt_quat = quat_torch.from_matrix(gt_mat).view(J, gen_frames, 4)
+            # Global quats (for converting to local quats for L2Q/rot metrics)
+            pred_global_quat = quat_torch.from_matrix(pred_mat.reshape(-1, 3, 3)).view(J, gen_frames, 4)
+            gt_global_quat = quat_torch.from_matrix(gt_mat.reshape(-1, 3, 3)).view(J, gen_frames, 4)
 
             parents_t = torch.tensor(skeleton["parents"], device=device).long()
             offsets_t = torch.tensor(skeleton["offsets"], device=device).to(pred_rot.dtype)
+            offsets_b = offsets_t.unsqueeze(0)  # (1, J, 3)
 
             bone_lengths = offsets_t.norm(dim=-1).unsqueeze(0)  # (1, J)
 
-            pred_quat_fk = pred_quat.unsqueeze(0).permute(0, 2, 1, 3)
-            gt_quat_fk = gt_quat.unsqueeze(0).permute(0, 2, 1, 3)
+            # Convert global -> local quats for quaternion-based metrics
+            pred_local_quat = skeleton_torch.from_global_rotations(
+                pred_global_quat.permute(1, 0, 2), parents_t
+            ).permute(1, 0, 2)  # (J, gen_frames, 4)
+            gt_local_quat = skeleton_torch.from_global_rotations(
+                gt_global_quat.permute(1, 0, 2), parents_t
+            ).permute(1, 0, 2)  # (J, gen_frames, 4)
 
-            offsets_fk = offsets_t.unsqueeze(0).unsqueeze(0).expand(1, gen_frames, J, 3)
+            # Compute positions from global rotation matrices
+            pred_R_tm = pred_mat.permute(1, 0, 2, 3).unsqueeze(0)  # (1, gen_frames, J, 3, 3)
+            gt_R_tm = gt_mat.permute(1, 0, 2, 3).unsqueeze(0)
 
-            # Use predicted/gt root pos deltas converted back to absolute for FK
             pred_global_pos = pred_root_pos_delta  # (1, gen_frames, 3)
             gt_global_pos = gt_root_pos_delta      # (1, gen_frames, 3)
 
-            pred_pos_fk, _ = skeleton_torch.fk(pred_quat_fk, pred_global_pos, offsets_fk, parents_t)
-            gt_pos_fk, _ = skeleton_torch.fk(gt_quat_fk, gt_global_pos, offsets_fk, parents_t)
+            pred_pos_fk = positions_from_global_rotmats(pred_R_tm, pred_global_pos, offsets_b, parents_t)
+            gt_pos_fk = positions_from_global_rotmats(gt_R_tm, gt_global_pos, offsets_b, parents_t)
 
             # Full sequence for MDC/MDCSS
             ctx_gt_rot = all_gt_rot[:context].to(device)
-            ctx_mat = sixd_torch.to_matrix(ctx_gt_rot.reshape(-1, 3, 2))
-            ctx_quat = quat_torch.from_matrix(ctx_mat).view(context, J, 4)
+            ctx_mat = sixd_torch.to_matrix(ctx_gt_rot.reshape(-1, 3, 2)).view(context, J, 3, 3)
 
-            full_pred_quat = torch.cat([ctx_quat, pred_quat.permute(1, 0, 2)], dim=0)
-            full_gt_quat_raw = sixd_torch.to_matrix(all_gt_rot.to(device).reshape(-1, 3, 2))
-            full_gt_quat = quat_torch.from_matrix(full_gt_quat_raw).view(total_frames, J, 4)
+            # Full sequence global rotmats
+            full_pred_mat = torch.cat([ctx_mat, pred_mat.permute(1, 0, 2, 3)], dim=0)  # (total_frames, J, 3, 3)
+            full_gt_mat = sixd_torch.to_matrix(all_gt_rot.to(device).reshape(-1, 3, 2)).view(total_frames, J, 3, 3)
 
-            full_pred_quat_fk = full_pred_quat.unsqueeze(0)
-            full_gt_quat_fk = full_gt_quat.unsqueeze(0)
+            full_pred_R = full_pred_mat.unsqueeze(0)  # (1, total_frames, J, 3, 3)
+            full_gt_R = full_gt_mat.unsqueeze(0)
 
-            offsets_full = offsets_t.unsqueeze(0).unsqueeze(0).expand(1, total_frames, J, 3)
-
-            # Full root pos: context (gt delta) + generated (pred/gt delta)
             ctx_root_delta = root_pos_window_delta[:context].to(device)  # (context, 3)
-            full_pred_root = torch.cat([ctx_root_delta, pred_root_pos_delta.squeeze(0)], dim=0).unsqueeze(0)  # (1, total_frames, 3)
-            full_gt_root = root_pos_window_delta.to(device).unsqueeze(0)  # (1, total_frames, 3)
+            full_pred_root = torch.cat([ctx_root_delta, pred_root_pos_delta.squeeze(0)], dim=0).unsqueeze(0)
+            full_gt_root = root_pos_window_delta.to(device).unsqueeze(0)
 
-            full_pred_pos, _ = skeleton_torch.fk(full_pred_quat_fk, full_pred_root, offsets_full, parents_t)
-            full_gt_pos, _ = skeleton_torch.fk(full_gt_quat_fk, full_gt_root, offsets_full, parents_t)
+            full_pred_pos = positions_from_global_rotmats(full_pred_R, full_pred_root, offsets_b, parents_t)
+            full_gt_pos = positions_from_global_rotmats(full_gt_R, full_gt_root, offsets_b, parents_t)
 
             for case in cases:
                 if case == "no_root":
@@ -173,8 +179,8 @@ def run_benchmark():
                 metrics[case]["l2p"].append(l2p)
 
                 # ---- L2Q: mean per-frame per-joint L2 quaternion error ----
-                pq = pred_quat.permute(1, 0, 2)  # (gen_frames, J, 4)
-                gq = gt_quat.permute(1, 0, 2)
+                pq = pred_local_quat.permute(1, 0, 2)  # (gen_frames, J, 4)
+                gq = gt_local_quat.permute(1, 0, 2)
                 dot = (pq * gq).sum(dim=-1, keepdim=True)
                 pq_aligned = torch.where(dot < 0, -pq, pq)
                 quat_diff = (pq_aligned - gq).norm(dim=-1)  # (gen_frames, J)

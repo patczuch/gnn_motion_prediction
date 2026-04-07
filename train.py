@@ -12,8 +12,6 @@ from geodesicloss import GeodesicLoss
 from motionpredictor import Model
 from dataset import BVHMotionDataset
 import pymotion.rotations.ortho6d_torch as sixd_torch
-import pymotion.rotations.quat_torch as quat_torch
-import pymotion.ops.skeleton_torch as skeleton_torch
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import numpy
 
@@ -55,8 +53,19 @@ class GroupedSkeletonBatchSampler(Sampler):
         return total
 
 
+def positions_from_global_rotmats(global_rotmats, global_pos, offsets, parents):
+    B, T, J = global_rotmats.shape[:3]
+    positions = torch.zeros(B, T, J, 3, device=global_rotmats.device, dtype=global_rotmats.dtype)
+    positions[:, :, 0, :] = global_pos
+    for j in range(1, J):
+        p = parents[j].item()
+        rotated_offset = torch.einsum('btij,bj->bti', global_rotmats[:, :, p, :, :], offsets[:, j, :])
+        positions[:, :, j, :] = positions[:, :, p, :] + rotated_offset
+    return positions
+
+
 def compute_loss(pred_rot, pred_root_pos, tgt_graph, src_graph,
-                 rot_loss_fn, pos_loss_fn, pos_weight, smooth_weight, root_pos_weight, config):
+                 rot_loss_fn, pos_loss_fn, rot_weight, pos_weight, smooth_weight, root_pos_weight, transition_weight, config):
     rotation_dim = config.rotation_dim
     feature_dim = rotation_dim
     gen_frames = config.gen_frames
@@ -79,27 +88,19 @@ def compute_loss(pred_rot, pred_root_pos, tgt_graph, src_graph,
 
     rot_loss = rot_loss_fn(pred_R.reshape(-1, 3, 3), gt_R.reshape(-1, 3, 3))
 
-    pred_quat = quat_torch.from_matrix(pred_R.reshape(-1, 3, 3)).view(B, J, gen_frames, 4)
-    gt_quat = quat_torch.from_matrix(gt_R.reshape(-1, 3, 3)).view(B, J, gen_frames, 4)
-
-    pred_quat_tm = pred_quat.permute(0, 2, 1, 3)
-    gt_quat_tm = gt_quat.permute(0, 2, 1, 3)
-
     parents_t = src_graph.parents[:J]
 
     offsets_b = src_graph.offsets.view(B, J, 3)
-    offsets_bt = offsets_b.unsqueeze(1).expand(B, gen_frames, J, 3)
+
+    pred_R_tm = pred_R.permute(0, 2, 1, 3, 4)  # (B, gen_frames, J, 3, 3)
+    gt_R_tm = gt_R.permute(0, 2, 1, 3, 4)
 
     global_pos = torch.zeros((B, gen_frames, 3), device=pred_rot.device, dtype=pred_rot.dtype)
 
-    pred_pos, _ = skeleton_torch.fk(pred_quat_tm, global_pos, offsets_bt, parents_t)
-    gt_pos, _ = skeleton_torch.fk(gt_quat_tm, global_pos, offsets_bt, parents_t)
+    pred_pos = positions_from_global_rotmats(pred_R_tm, global_pos, offsets_b, parents_t)
+    gt_pos = positions_from_global_rotmats(gt_R_tm, global_pos, offsets_b, parents_t)
 
-    # pred_pos, gt_pos: (B, gen_frames, J, 3)
-    pos_diff = pred_pos - gt_pos
-    weighted_sq = (src_graph.joint_weights * pos_diff) ** 2
-
-    pos_loss = weighted_sq.mean()
+    pos_loss = pos_loss_fn(pred_pos, gt_pos)
 
     # Smoothness loss
     src_seq_flat = src_graph.x[:, 0:context_length * feature_dim]
@@ -107,31 +108,31 @@ def compute_loss(pred_rot, pred_root_pos, tgt_graph, src_graph,
     last_ctx_rot6 = src_seq[:, :, -1, :]
 
     last_ctx_R = sixd_torch.to_matrix(last_ctx_rot6.reshape(-1, 3, 2)).view(B, J, 1, 3, 3)
-    last_ctx_quat = quat_torch.from_matrix(last_ctx_R.reshape(-1, 3, 3)).view(B, J, 1, 4)
-    last_ctx_quat_tm = last_ctx_quat.permute(0, 2, 1, 3)
+    last_ctx_R_tm = last_ctx_R.permute(0, 2, 1, 3, 4)  # (B, 1, J, 3, 3)
 
-    offsets_bt_single = offsets_b.unsqueeze(1)
     global_pos_single = torch.zeros((B, 1, 3), device=pred_rot.device, dtype=pred_rot.dtype)
-
-    last_ctx_pos, _ = skeleton_torch.fk(last_ctx_quat_tm, global_pos_single, offsets_bt_single, parents_t)
+    last_ctx_pos = positions_from_global_rotmats(last_ctx_R_tm, global_pos_single, offsets_b, parents_t)
 
     pred_pos_with_ctx = torch.cat([last_ctx_pos, pred_pos], dim=1)
     gt_pos_with_ctx = torch.cat([last_ctx_pos, gt_pos], dim=1)
 
     pred_vel = pred_pos_with_ctx[:, 1:, :, :] - pred_pos_with_ctx[:, :-1, :, :]
     gt_vel = gt_pos_with_ctx[:, 1:, :, :] - gt_pos_with_ctx[:, :-1, :, :]
-    smooth_loss = pos_loss_fn(pred_vel, gt_vel)
+
+    transition_loss = pos_loss_fn(pred_vel[:, 0:1, :, :], gt_vel[:, 0:1, :, :])
+    inner_smooth_loss = pos_loss_fn(pred_vel[:, 1:, :, :], gt_vel[:, 1:, :, :])
+    smooth_loss = transition_weight * transition_loss + inner_smooth_loss
 
     # Root position loss
     gt_root_pos = tgt_graph.root_pos.view(B, gen_frames * 3)
     root_pos_loss = pos_loss_fn(pred_root_pos, gt_root_pos)
 
-    total_loss = (rot_loss
+    total_loss = (rot_weight * rot_loss
                   + pos_weight * pos_loss
                   + smooth_weight * smooth_loss
                   + root_pos_weight * root_pos_loss)
 
-    return total_loss, rot_loss, pos_loss * pos_weight, smooth_loss * smooth_weight, root_pos_loss * root_pos_weight
+    return total_loss, rot_weight * rot_loss, pos_loss * pos_weight, smooth_loss * smooth_weight, root_pos_loss * root_pos_weight
 
 if __name__ == "__main__":
     start_time = time.strftime("%Y%m%d-%H%M%S")
@@ -220,9 +221,11 @@ if __name__ == "__main__":
     feature_dim = rotation_dim
     gen_frames = config.gen_frames
 
+    rot_weight = config.rot_weight
     pos_weight = config.pos_weight
     smooth_weight = config.smooth_weight
     root_pos_weight = config.root_pos_weight
+    transition_weight = config.transition_weight
 
     patience = config.early_stopping_patience
     min_delta = config.early_stopping_min_delta
@@ -250,7 +253,7 @@ if __name__ == "__main__":
                 pred_rot, pred_root_pos = model(src_graph)
                 loss, rot_loss, pos_loss, smooth_loss, root_pos_loss = compute_loss(
                     pred_rot, pred_root_pos, tgt_graph, src_graph,
-                    rot_loss_fn, pos_loss_fn, pos_weight, smooth_weight, root_pos_weight, config
+                    rot_loss_fn, pos_loss_fn, rot_weight, pos_weight, smooth_weight, root_pos_weight, transition_weight, config
                 )
 
             if torch.isnan(loss) or torch.isinf(loss):
@@ -293,7 +296,7 @@ if __name__ == "__main__":
                     pred_rot, pred_root_pos = model(src_graph)
                     loss, rot_loss, pos_loss, smooth_loss, root_pos_loss = compute_loss(
                         pred_rot, pred_root_pos, tgt_graph, src_graph,
-                        rot_loss_fn, pos_loss_fn, pos_weight, smooth_weight, root_pos_weight, config
+                        rot_loss_fn, pos_loss_fn, rot_weight, pos_weight, smooth_weight, root_pos_weight, transition_weight, config
                     )
                 val_loss += loss.item()
                 val_rot_loss += rot_loss.item()

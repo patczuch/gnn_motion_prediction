@@ -3,9 +3,61 @@ import torch
 import numpy as np
 from torch_geometric.data import Data, Dataset
 from pymotion.io.bvh import BVH
-import pymotion.rotations.ortho6d as sixd
+import pymotion.ops.skeleton as skeleton_ops
 
 import config
+
+
+ROT_JUMP_THRESH = 90.0
+POS_JUMP_THRESH = 25.0
+
+
+def _quat_to_rotmat(q):
+    w, x, y, z = q[..., 0], q[..., 1], q[..., 2], q[..., 3]
+    R = np.stack([
+        1 - 2*(y*y + z*z),  2*(x*y - z*w),      2*(x*z + y*w),
+        2*(x*y + z*w),      1 - 2*(x*x + z*z),  2*(y*z - x*w),
+        2*(x*z - y*w),      2*(y*z + x*w),      1 - 2*(x*x + y*y),
+    ], axis=-1).reshape(q.shape[:-1] + (3, 3))
+    return R
+
+
+def _geodesic_deg_batch(Ra, Rb):
+    R_diff = np.einsum('...ji,...jk->...ik', Ra, Rb)
+    trace = R_diff[..., 0, 0] + R_diff[..., 1, 1] + R_diff[..., 2, 2]
+    cos_angle = np.clip((trace - 1.0) / 2.0, -1.0, 1.0)
+    return np.degrees(np.arccos(cos_angle))
+
+
+def compute_bad_transitions(rotations_quat, root_positions,
+                             rot_thresh=ROT_JUMP_THRESH,
+                             pos_thresh=POS_JUMP_THRESH):
+    bad = set()
+    F = rotations_quat.shape[0]
+    if F < 2:
+        return bad
+
+    pos_diff = np.linalg.norm(
+        root_positions[1:] - root_positions[:-1], axis=-1
+    )  # (F-1,)
+    bad_pos = np.where(pos_diff > pos_thresh)[0] + 1
+    bad.update(bad_pos.tolist())
+
+    Ra = _quat_to_rotmat(rotations_quat[:-1])   # (F-1, J, 3, 3)
+    Rb = _quat_to_rotmat(rotations_quat[1:])    # (F-1, J, 3, 3)
+    geo = _geodesic_deg_batch(Ra, Rb)           # (F-1, J)
+    max_geo = geo.max(axis=-1)                  # (F-1,)
+    bad_rot = np.where(max_geo > rot_thresh)[0] + 1
+    bad.update(bad_rot.tolist())
+
+    return bad
+
+
+def window_has_jump(bad_transitions, start, length):
+    for f in bad_transitions:
+        if start < f <= start + length - 1:
+            return True
+    return False
 
 
 class BVHMotionDataset(Dataset):
@@ -31,7 +83,6 @@ class BVHMotionDataset(Dataset):
                 print(f"{fname} ({i}/{len(bvh_files)})")
 
                 filepath = os.path.join(directory, fname)
-                cache_path = filepath + ".feat.pt"
 
                 bvh = BVH()
                 bvh.load(filepath)
@@ -69,9 +120,6 @@ class BVHMotionDataset(Dataset):
                         ancestor_counts[j] += 1
                         p = parents[p].item()
 
-                joint_weights = 1.0 / (1.0 + ancestor_counts)  # shape [J]
-                joint_weights = joint_weights.view(1, 1, J, 1)  # reshape for broadcasting
-
                 self.skeleton_cache[filepath] = {
                     "offsets": offsets,
                     "parents": parents,
@@ -81,8 +129,7 @@ class BVHMotionDataset(Dataset):
                     "rot_order": bvh.data["rot_order"],
                     "frame_time": bvh.data["frame_time"],
                     "edges": edges,
-                    "bone_lengths": bone_lengths,
-                    "joint_weights": joint_weights
+                    "bone_lengths": bone_lengths
                 }
 
                 skel_key = (len(parents), tuple(parents))
@@ -90,29 +137,53 @@ class BVHMotionDataset(Dataset):
                     self._skel_key_to_id[skel_key] = len(self._skel_key_to_id)
                 skel_id = self._skel_key_to_id[skel_key]
 
+                cache_path = filepath + ".globalfeat.pt"
+
                 if os.path.exists(cache_path):
                     feats = torch.load(cache_path)
-                    print("  loaded precomputed features")
+                    print("  loaded precomputed global rotation features")
                 else:
-                    rot6_np = sixd.from_quat(rotations_quat)
-                    rot6 = torch.from_numpy(rot6_np).float()
-                    rot6 = rot6.reshape(rot6.shape[0], rot6.shape[1], -1)
+                    # Compute global rotations via FK
+                    F_total = rotations_quat.shape[0]
+                    global_pos_np = np.zeros((F_total, 3), dtype=np.float32)
+                    offsets_expanded = np.tile(offsets, (F_total, 1, 1))
+                    _, global_rotmats = skeleton_ops.fk(
+                        rotations_quat, global_pos_np, offsets_expanded, parents
+                    )
+                    # global_rotmats: (F, J, 3, 3) -> convert to 6D
+                    global_6d = global_rotmats[..., :2]  # (F, J, 3, 2)
+                    rot6 = torch.from_numpy(global_6d.copy()).float()
+                    rot6 = rot6.reshape(rot6.shape[0], rot6.shape[1], -1)  # (F, J, 6)
 
-                    feats = torch.cat([rot6], dim=-1)
+                    feats = rot6
+                    torch.save(feats, cache_path)
+                    print("  computed and cached global rotation features")
 
                 self.cache[filepath] = feats
 
                 # Cache root positions: (F, 3)
-                root_positions = torch.from_numpy(
-                    local_positions[:, 0, :].copy()
-                ).float()
+                root_pos_np = local_positions[:, 0, :].copy()
+                root_positions = torch.from_numpy(root_pos_np).float()
                 self.root_pos_cache[filepath] = root_positions
 
-                F = feats.shape[0]
+                # Compute bad frame transitions (position or rotation jumps)
+                bad_transitions = compute_bad_transitions(rotations_quat, root_pos_np)
+                if bad_transitions:
+                    print(f"  {len(bad_transitions)} bad transition(s) detected, affected windows will be skipped")
 
-                for start in range(0, F - (self.context + config.gen_frames), self.step):
+                F = feats.shape[0]
+                window_len = self.context + config.gen_frames
+                skipped = 0
+
+                for start in range(0, F - window_len, self.step):
+                    if window_has_jump(bad_transitions, start, window_len):
+                        skipped += 1
+                        continue
                     self.samples.append((filepath, start))
                     self.sample_skel.append(skel_id)
+
+                if skipped:
+                    print(f"  Skipped {skipped} window(s) containing jumps")
 
         self.sample_skel = np.array(self.sample_skel)
         self.get_cache = [None for _ in range(len(self.samples))]
@@ -166,7 +237,7 @@ class BVHMotionDataset(Dataset):
 
         src_graph = Data(
             x=context, edge_index=edges, batch=batch,
-            parents=parents_t, offsets=offsets_t, joint_weights=skeleton["joint_weights"],
+            parents=parents_t, offsets=offsets_t,
             root_pos=root_pos_context,
         )
         tgt_graph = Data(

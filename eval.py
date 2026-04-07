@@ -9,16 +9,16 @@ from dataset import BVHMotionDataset
 from geodesicloss import GeodesicLoss
 import pymotion.rotations.ortho6d as sixd
 import pymotion.rotations.ortho6d_torch as sixd_torch
-import pymotion.rotations.quat_torch as quat_torch
-import pymotion.ops.skeleton_torch as skeleton_torch
+import pymotion.ops.skeleton as skeleton_ops
 from pymotion.io.bvh import BVH
 import pymotion.rotations.quat as quat
 import config
+from train import positions_from_global_rotmats
 
 if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    checkpoint_path = "./checkpoints/model_20260401-070744-best.pth"
+    checkpoint_path = "./checkpoints/model_20260407-182949-best.pth"
     dataset_paths = config.eval_data_paths
 
     out_dir = "./eval_results"
@@ -131,32 +131,34 @@ if __name__ == "__main__":
 
                 rot_loss = rot_loss_fn(pred_mat, gt_mat)
 
+                # Compute position loss from global rotation matrices directly
                 n_so_far = len(generated_frames)
                 all_gen_tensor = torch.stack(
                     [g.to(device) for g in generated_frames], dim=1
-                )
+                )  # (J, n_so_far, rotation_dim)
                 all_gt_target = all_gt_rot[context:context + n_so_far].to(device).permute(1, 0, 2)
 
-                pred_quat = quat_torch.from_matrix(
-                    sixd_torch.to_matrix(all_gen_tensor.reshape(-1, 3, 2))
-                ).view(1, J, n_so_far, 4)
-                gt_quat = quat_torch.from_matrix(
-                    sixd_torch.to_matrix(all_gt_target.reshape(-1, 3, 2))
-                ).view(1, J, n_so_far, 4)
+                # Convert to rotation matrices: (J, n_so_far, 3, 3)
+                pred_rotmats = sixd_torch.to_matrix(
+                    all_gen_tensor.reshape(-1, 3, 2)
+                ).view(J, n_so_far, 3, 3)
+                gt_rotmats = sixd_torch.to_matrix(
+                    all_gt_target.reshape(-1, 3, 2)
+                ).view(J, n_so_far, 3, 3)
 
-                pred_quat_tm = pred_quat.permute(0, 2, 1, 3)
-                gt_quat_tm = gt_quat.permute(0, 2, 1, 3)
+                # Reshape to (1, n_so_far, J, 3, 3)
+                pred_rotmats_tm = pred_rotmats.permute(1, 0, 2, 3).unsqueeze(0)
+                gt_rotmats_tm = gt_rotmats.permute(1, 0, 2, 3).unsqueeze(0)
 
                 parents_t = torch.tensor(skeleton["parents"], device=device).long()
                 offsets_t = torch.tensor(skeleton["offsets"], device=device).to(pred_rot.dtype)
-                offsets_bt = offsets_t.view(1, 1, J, 3).expand(1, n_so_far, J, 3)
+                offsets_b = offsets_t.unsqueeze(0)  # (1, J, 3)
 
-                # Use predicted/gt root pos deltas for FK
                 pred_global_pos = pred_root_pos_delta[:n_so_far].unsqueeze(0)  # (1, n_so_far, 3)
-                gt_global_pos = root_pos_gt_delta[:n_so_far].to(device).unsqueeze(0)  # (1, n_so_far, 3)
+                gt_global_pos = root_pos_gt_delta[:n_so_far].to(device).unsqueeze(0)
 
-                pred_pos_tm, _ = skeleton_torch.fk(pred_quat_tm, pred_global_pos, offsets_bt, parents_t)
-                gt_pos_tm, _ = skeleton_torch.fk(gt_quat_tm, gt_global_pos, offsets_bt, parents_t)
+                pred_pos_tm = positions_from_global_rotmats(pred_rotmats_tm, pred_global_pos, offsets_b, parents_t)
+                gt_pos_tm = positions_from_global_rotmats(gt_rotmats_tm, gt_global_pos, offsets_b, parents_t)
 
                 pos_loss = pos_weight * pos_loss_fn(pred_pos_tm, gt_pos_tm)
                 loss = rot_loss + pos_loss
@@ -173,23 +175,26 @@ if __name__ == "__main__":
             bvh_rots = torch.stack(bvh_rots)
             bvh_rots_gt = torch.stack(bvh_rots_gt)
 
+            # Convert global 6D -> global quats -> local quats for BVH export
             ortho6 = bvh_rots.view(-1, 3, 2).cpu().numpy()
             ortho6_gt = bvh_rots_gt.view(-1, 3, 2).cpu().numpy()
-            bvh_rots = bvh_rots.to(torch.float32)
-            bvh_rots_gt = bvh_rots_gt.to(torch.float32)
 
             T_total, Jb, D = bvh_rots.shape
             assert T_total == total_frames and Jb == J and D == rotation_dim
 
-            quats = sixd.to_quat(ortho6).reshape(T_total, J, 4)
-            quats_gt = sixd.to_quat(ortho6_gt).reshape(T_total, J, 4)
+            global_quats = sixd.to_quat(ortho6).reshape(T_total, J, 4)
+            global_quats_gt = sixd.to_quat(ortho6_gt).reshape(T_total, J, 4)
+
+            # Convert global rotations to local rotations for BVH
+            local_quats = skeleton_ops.from_global_rotations(global_quats, skeleton["parents"])
+            local_quats_gt = skeleton_ops.from_global_rotations(global_quats_gt, skeleton["parents"])
 
             eulers = quat.to_euler(
-                quats,
+                local_quats,
                 np.tile(skeleton["rot_order"], (T_total, 1, 1)),
             ) * 180 / math.pi
             eulers_gt = quat.to_euler(
-                quats_gt,
+                local_quats_gt,
                 np.tile(skeleton["rot_order"], (T_total, 1, 1)),
             ) * 180 / math.pi
 
