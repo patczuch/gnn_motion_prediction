@@ -30,7 +30,7 @@ def npss(pred_signal: np.ndarray, gt_signal: np.ndarray) -> float:
 def run_benchmark():
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    checkpoint_path = "./checkpoints/model_20260401-070744-best.pth"
+    checkpoint_path = "./checkpoints/model_20260410-080116-best.pth"
     model_name = os.path.splitext(os.path.basename(checkpoint_path))[0]
     dataset_paths = config.eval_data_paths
     context = config.context_length
