@@ -1,6 +1,8 @@
 import os
+import csv
 import torch
 import numpy as np
+from datetime import datetime
 from torch_geometric.data import Data
 from motionpredictor import Model
 from dataset import BVHMotionDataset
@@ -275,17 +277,67 @@ def run_benchmark():
             log_print(f"  Root Position MAE:             {np.mean(m['root_pos_mae']):.6f}")
             log_print(f"  Root Position RMSE:            {np.mean(m['root_pos_rmse']):.6f}")
             if m["mdc_pred"]:
-                mdc_diff = np.abs(np.array(m["mdc_pred"]) - np.array(m["mdc_gt"]))
-                mdcss_diff = np.abs(np.array(m["mdcss_pred"]) - np.array(m["mdcss_gt"]))
-                log_print(f"  MDC (pred):                    {np.mean(m['mdc_pred']):.6f}")
-                log_print(f"  MDC (gt):                      {np.mean(m['mdc_gt']):.6f}")
-                log_print(f"  MDC (pred-gt):                 {np.mean(mdc_diff):.6f}")
-                log_print(f"  MDCSS (pred):                  {np.mean(m['mdcss_pred']):.6f}")
-                log_print(f"  MDCSS (gt):                    {np.mean(m['mdcss_gt']):.6f}")
-                log_print(f"  MDCSS (pred-gt):               {np.mean(mdcss_diff):.6f}")
+                mdc_pred_arr = np.array(m["mdc_pred"])
+                mdc_gt_arr = np.array(m["mdc_gt"])
+                mdcss_pred_arr = np.array(m["mdcss_pred"])
+                mdcss_gt_arr = np.array(m["mdcss_gt"])
+                mdc_mean_pred = np.mean(mdc_pred_arr)
+                mdc_mean_gt = np.mean(mdc_gt_arr)
+                mdcss_mean_pred = np.mean(mdcss_pred_arr)
+                mdcss_mean_gt = np.mean(mdcss_gt_arr)
+                mdc_pct = np.where(mdc_gt_arr != 0, (mdc_pred_arr - mdc_gt_arr) / np.abs(mdc_gt_arr) * 100.0, np.nan)
+                mdcss_pct = np.where(mdcss_gt_arr != 0, (mdcss_pred_arr - mdcss_gt_arr) / np.abs(mdcss_gt_arr) * 100.0, np.nan)
+                log_print(f"  MDC (pred):                    {mdc_mean_pred:.6f}")
+                log_print(f"  MDC (gt):                      {mdc_mean_gt:.6f}")
+                log_print(f"  MDC (pred-gt %):               {np.nanmean(mdc_pct):.4f}%")
+                log_print(f"  MDCSS (pred):                  {mdcss_mean_pred:.6f}")
+                log_print(f"  MDCSS (gt):                    {mdcss_mean_gt:.6f}")
+                log_print(f"  MDCSS (pred-gt %):             {np.nanmean(mdcss_pct):.4f}%")
             else:
                 log_print(f"  MDC / MDCSS:                   N/A")
+                mdc_pred_arr = mdc_gt_arr = mdcss_pred_arr = mdcss_gt_arr = None
+                mdc_mean_pred = mdc_mean_gt = mdcss_mean_pred = mdcss_mean_gt = None
+                mdc_pct = mdcss_pct = None
             log_print()
+
+            # ---- Append to CSV ----
+            csv_path = "./benchmarks/benchmarks.csv"
+            csv_exists = os.path.isfile(csv_path)
+            csv_headers = [
+                "timestamp", "model", "case", "n_samples",
+                "l2p", "l2q", "npss",
+                "rot_mae_deg", "rot_rmse_deg",
+                "pos_mae", "pos_rmse",
+                "root_pos_mae", "root_pos_rmse",
+                "mdc_pred", "mdc_gt", "mdc_pct_diff",
+                "mdcss_pred", "mdcss_gt", "mdcss_pct_diff",
+            ]
+            with open(csv_path, "a", newline="", encoding="utf-8") as csv_file:
+                writer = csv.DictWriter(csv_file, fieldnames=csv_headers)
+                if not csv_exists:
+                    writer.writeheader()
+                row = {
+                    "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "model": model_name,
+                    "case": case,
+                    "n_samples": n,
+                    "l2p": f"{np.mean(m['l2p']):.6f}",
+                    "l2q": f"{np.mean(m['l2q']):.6f}",
+                    "npss": f"{np.mean(m['npss']):.6f}" if m["npss"] else "N/A",
+                    "rot_mae_deg": f"{np.mean(m['rot_mae']):.6f}",
+                    "rot_rmse_deg": f"{np.mean(m['rot_rmse']):.6f}",
+                    "pos_mae": f"{np.mean(m['pos_mae']):.6f}",
+                    "pos_rmse": f"{np.mean(m['pos_rmse']):.6f}",
+                    "root_pos_mae": f"{np.mean(m['root_pos_mae']):.6f}",
+                    "root_pos_rmse": f"{np.mean(m['root_pos_rmse']):.6f}",
+                    "mdc_pred": f"{mdc_mean_pred:.6f}" if mdc_mean_pred is not None else "N/A",
+                    "mdc_gt": f"{mdc_mean_gt:.6f}" if mdc_mean_gt is not None else "N/A",
+                    "mdc_pct_diff": f"{np.nanmean(mdc_pct):.4f}" if mdc_pct is not None else "N/A",
+                    "mdcss_pred": f"{mdcss_mean_pred:.6f}" if mdcss_mean_pred is not None else "N/A",
+                    "mdcss_gt": f"{mdcss_mean_gt:.6f}" if mdcss_mean_gt is not None else "N/A",
+                    "mdcss_pct_diff": f"{np.nanmean(mdcss_pct):.4f}" if mdcss_pct is not None else "N/A",
+                }
+                writer.writerow(row)
 
 
 if __name__ == "__main__":
