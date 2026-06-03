@@ -18,7 +18,7 @@ from train import positions_from_global_rotmats
 if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    checkpoint_path = "./checkpoints/model_20260407-203701-best.pth"
+    checkpoint_path = "./checkpoints/model_20260603-073719-best.pth"
     dataset_paths = config.eval_data_paths
 
     out_dir = "./eval_results"

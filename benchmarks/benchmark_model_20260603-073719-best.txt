@@ -1,0 +1,42 @@
+
+Skipped 0 samples (not enough frames).
+Evaluated 2246 samples.
+
+============================================================
+  Case: with_root
+============================================================
+  L2P (mean joint pos error):    9.412672
+  L2Q (mean joint quat error):   0.123073
+  NPSS:                          0.016323
+  Joint Rotation MAE (deg):      14.155054
+  Joint Rotation RMSE (deg):     17.728404
+  Joint Position MAE:            4.584759
+  Joint Position RMSE:           6.778428
+  Root Position MAE:             3.006958
+  Root Position RMSE:            4.235395
+  MDC (pred):                    0.214582
+  MDC (gt):                      0.079957
+  MDC (pred-gt %):               328.3000%
+  MDCSS (pred):                  1.572346
+  MDCSS (gt):                    0.442309
+  MDCSS (pred-gt %):             531.3929%
+
+============================================================
+  Case: no_root
+============================================================
+  L2P (mean joint pos error):    9.147457
+  L2Q (mean joint quat error):   0.123073
+  NPSS:                          0.016323
+  Joint Rotation MAE (deg):      14.155054
+  Joint Rotation RMSE (deg):     17.728404
+  Joint Position MAE:            4.456854
+  Joint Position RMSE:           6.714351
+  Root Position MAE:             0.000000
+  Root Position RMSE:            0.000000
+  MDC (pred):                    0.214575
+  MDC (gt):                      0.079949
+  MDC (pred-gt %):               328.4015%
+  MDCSS (pred):                  1.572341
+  MDCSS (gt):                    0.442301
+  MDCSS (pred-gt %):             531.4636%
+
