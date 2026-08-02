@@ -4,7 +4,8 @@ import torch
 import numpy as np
 from torch_geometric.data import Data
 from motionpredictor import Model
-from dataset import root_yaw, yaw_rotmat, rotate_rot6, rotate_vec
+from dataset import (root_yaw, yaw_rotmat, rotate_rot6, rotate_vec,
+                     skeleton_geometry_features)
 from pymotion.io.bvh import BVH
 import pymotion.rotations.ortho6d as sixd
 import pymotion.rotations.ortho6d_torch as sixd_torch
@@ -145,6 +146,10 @@ def main():
             rpc = window_root.reshape(context_length * 3)
 
             x_input = ctx_rot_in.permute(1, 0, 2).reshape(J, context_length * rotation_dim)
+            if config.skeleton_geometry:
+                x_input = torch.cat(
+                    [x_input, skeleton_geometry_features(bvh_data["offsets"])], dim=1
+                )
             batch = torch.zeros(J, dtype=torch.long, device=device)
             parents_t = torch.tensor(bvh_data["parents"], dtype=torch.long)
             offsets_t = torch.from_numpy(bvh_data["offsets"]).float()

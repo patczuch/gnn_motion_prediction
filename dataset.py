@@ -50,6 +50,25 @@ def rotate_vec(v, R):
     return torch.einsum('ij,...j->...i', R, v)
 
 
+# unit rest-offset direction (3) + bone length relative to the skeleton (1)
+GEOM_DIM = 4
+
+
+def skeleton_geometry_features(offsets):
+    off = torch.as_tensor(np.asarray(offsets), dtype=torch.float32)
+    lengths = off.norm(dim=-1)
+
+    dirs = off / lengths.clamp(min=1e-8).unsqueeze(-1)
+    dirs[lengths < 1e-8] = 0.0
+    dirs[0] = 0.0
+
+    lengths = lengths.clone()
+    lengths[0] = 0.0
+    rel = lengths / lengths[1:].mean().clamp(min=1e-8)
+
+    return torch.cat([dirs, rel.unsqueeze(-1)], dim=-1)
+
+
 def _quat_to_rotmat(q):
     w, x, y, z = q[..., 0], q[..., 1], q[..., 2], q[..., 3]
     R = np.stack([
@@ -146,6 +165,7 @@ class BVHMotionDataset(Dataset):
         self.skeleton_cache = {}
         self._skel_key_to_id = {}
         self.facing_normalization = config.facing_normalization
+        self.skeleton_geometry = config.skeleton_geometry
 
         print("Loading dataset...")
         for directory in directories:
@@ -188,6 +208,7 @@ class BVHMotionDataset(Dataset):
                     "rot_order": bvh.data["rot_order"],
                     "frame_time": bvh.data["frame_time"],
                     "edges": edges,
+                    "geom": skeleton_geometry_features(offsets),
                 }
 
                 skel_key = (len(parents), tuple(parents))
@@ -285,6 +306,9 @@ class BVHMotionDataset(Dataset):
 
         context = full_window[:H].permute(1, 0, 2).reshape(J, H * rotsize)
         target = full_window[H:H + gen_frames].permute(1, 0, 2).reshape(J, gen_frames * rotsize)
+
+        if self.skeleton_geometry:
+            context = torch.cat([context, skeleton["geom"]], dim=1)
 
         root_pos_context = root_pos_window[:H].reshape(H * 3)           # (H*3,)
         root_pos_target = root_pos_window[H:H + gen_frames].reshape(gen_frames * 3)  # (gen_frames*3,)

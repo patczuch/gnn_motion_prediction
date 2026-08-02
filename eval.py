@@ -107,7 +107,10 @@ if __name__ == "__main__":
                     root_pos_context.view(context, 3), R_inv
                 ).reshape(context * 3)
 
-            x_input = context_frames.permute(1, 0, 2).reshape(J, -1).to(device)
+            x_input = context_frames.permute(1, 0, 2).reshape(J, -1)
+            if dataset.skeleton_geometry:
+                x_input = torch.cat([x_input, skeleton["geom"]], dim=1)
+            x_input = x_input.to(device)
             edge_index = skeleton["edges"].to(device)
             batch = torch.zeros(J, dtype=torch.long, device=device)
             src_graph = Data(

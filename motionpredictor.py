@@ -1,6 +1,7 @@
 import torch
 from torch_geometric.nn import GATConv
 from torch_geometric.utils import scatter
+from dataset import GEOM_DIM
 import config
 
 
@@ -9,6 +10,8 @@ class Model(torch.nn.Module):
         super().__init__()
 
         input_dim = config.rotation_dim * config.context_length
+        if config.skeleton_geometry:
+            input_dim += GEOM_DIM
         output_dim = config.rotation_dim * config.gen_frames
         root_pos_output_dim = 3 * config.gen_frames
         hid_lyrs = config.hid_lyrs
