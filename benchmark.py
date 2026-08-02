@@ -1,17 +1,37 @@
 import os
 import csv
+import shutil
 import torch
 import numpy as np
 from datetime import datetime
 from torch_geometric.data import Data
 from motionpredictor import Model
-from dataset import BVHMotionDataset
+from dataset import BVHMotionDataset, yaw_rotmat, rotate_rot6, rotate_vec
 import pymotion.rotations.ortho6d_torch as sixd_torch
 import pymotion.rotations.quat_torch as quat_torch
 import pymotion.ops.skeleton_torch as skeleton_torch
 from train import positions_from_global_rotmats
 from mdc_mdcss import torch_mdc_mdcss_metrics
 import config
+
+
+def _migrate_csv_schema(csv_path, headers):
+    if not os.path.isfile(csv_path):
+        return
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        rows = list(csv.reader(f))
+    if not rows or rows[0] == headers:
+        return
+
+    old_headers = rows[0]
+    shutil.copy2(csv_path, csv_path + ".bak")
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(headers)
+        for row in rows[1:]:
+            d = dict(zip(old_headers, row))
+            writer.writerow([d.get(h, "ALL" if h == "dataset" else "N/A") for h in headers])
+    print(f"  migrated {csv_path} to the current schema (backup: {csv_path}.bak)")
 
 
 def npss(pred_signal: np.ndarray, gt_signal: np.ndarray) -> float:
@@ -52,15 +72,24 @@ def run_benchmark():
     total_frames = context + gen_frames
 
     cases = ["with_root", "no_root"]
-    metrics = {c: {
-        "l2p": [], "l2q": [],
-        "rot_mae": [], "rot_rmse": [],
-        "pos_mae": [], "pos_rmse": [],
-        "root_pos_mae": [], "root_pos_rmse": [],
-        "npss": [],
-        "mdc_pred": [], "mdc_gt": [],
-        "mdcss_pred": [], "mdcss_gt": [],
-    } for c in cases}
+    ALL = "ALL"
+
+    def new_metrics():
+        return {
+            "l2p": [], "l2q": [],
+            "rot_mae": [], "rot_rmse": [],
+            "pos_mae": [], "pos_rmse": [],
+            "root_pos_mae": [], "root_pos_rmse": [],
+            "npss": [],
+            "mdc_pred": [], "mdc_gt": [],
+            "mdcss_pred": [], "mdcss_gt": [],
+        }
+
+    dataset_names = [os.path.basename(os.path.normpath(p)) for p in dataset_paths]
+    metrics = {(c, d): new_metrics() for c in cases for d in dataset_names + [ALL]}
+
+    def dataset_of(filepath):
+        return os.path.basename(os.path.dirname(filepath))
 
     skipped = 0
 
@@ -89,12 +118,21 @@ def run_benchmark():
 
             # --- Run model ---
             context_frames = all_gt_rot[:context]  # (context, J, rotation_dim)
+            root_pos_ctx_in = root_pos_context
+            if dataset.facing_normalization:
+                theta = dataset.yaw_cache[filepath][start + context - 1]
+                R_inv, R_fwd = yaw_rotmat(-theta), yaw_rotmat(theta).to(device)
+                context_frames = rotate_rot6(context_frames, R_inv)
+                root_pos_ctx_in = rotate_vec(
+                    root_pos_context.view(context, 3), R_inv
+                ).reshape(context * 3)
+
             x_input = context_frames.permute(1, 0, 2).reshape(J, -1).to(device)
             edge_index = skeleton["edges"].to(device)
             batch = torch.zeros(J, dtype=torch.long, device=device)
             src_graph = Data(
                 x=x_input, edge_index=edge_index, batch=batch,
-                root_pos=root_pos_context.to(device),
+                root_pos=root_pos_ctx_in.to(device),
             )
 
             pred_rot, pred_root_pos = model(src_graph)
@@ -102,6 +140,10 @@ def run_benchmark():
 
             # Predicted root pos delta: (1, gen_frames, 3)
             pred_root_pos_delta = pred_root_pos.view(1, gen_frames, 3)
+
+            if dataset.facing_normalization:
+                pred_seq = rotate_rot6(pred_seq, R_fwd)
+                pred_root_pos_delta = rotate_vec(pred_root_pos_delta, R_fwd)
             # GT root pos delta: (1, gen_frames, 3)
             gt_root_pos_delta = root_pos_gt_delta.unsqueeze(0).to(device)
 
@@ -158,7 +200,17 @@ def run_benchmark():
             full_pred_pos = positions_from_global_rotmats(full_pred_R, full_pred_root, offsets_b, parents_t)
             full_gt_pos = positions_from_global_rotmats(full_gt_R, full_gt_root, offsets_b, parents_t)
 
+            ds_name = dataset_of(filepath)
+
             for case in cases:
+                # Every metric is recorded against both its own eval set and the
+                # aggregate, so the two views can never drift apart.
+                sinks = [metrics[(case, ds_name)], metrics[(case, ALL)]]
+
+                def rec(key, value, _sinks=sinks):
+                    for s in _sinks:
+                        s[key].append(value)
+
                 if case == "no_root":
                     p_pos = pred_pos_fk.clone()
                     g_pos = gt_pos_fk.clone()
@@ -178,7 +230,7 @@ def run_benchmark():
                 # ---- L2P: mean per-frame per-joint L2 position error ----
                 pos_diff = (p_pos - g_pos).norm(dim=-1)  # (1, gen_frames, J)
                 l2p = pos_diff.mean().item()
-                metrics[case]["l2p"].append(l2p)
+                rec("l2p", l2p)
 
                 # ---- L2Q: mean per-frame per-joint L2 quaternion error ----
                 pq = pred_local_quat.permute(1, 0, 2)  # (gen_frames, J, 4)
@@ -187,7 +239,7 @@ def run_benchmark():
                 pq_aligned = torch.where(dot < 0, -pq, pq)
                 quat_diff = (pq_aligned - gq).norm(dim=-1)  # (gen_frames, J)
                 l2q = quat_diff.mean().item()
-                metrics[case]["l2q"].append(l2q)
+                rec("l2q", l2q)
 
                 # ---- Joint rotation MAE & RMSE (geodesic difference) ----
                 dot_val = (pq_aligned * gq).sum(dim=-1).clamp(-1.0, 1.0)  # (gen_frames, J)
@@ -195,30 +247,30 @@ def run_benchmark():
                 angle_deg = angle_rad * (180.0 / torch.pi)
                 rot_mae = angle_deg.mean().item()
                 rot_rmse = angle_deg.pow(2).mean().sqrt().item()
-                metrics[case]["rot_mae"].append(rot_mae)
-                metrics[case]["rot_rmse"].append(rot_rmse)
+                rec("rot_mae", rot_mae)
+                rec("rot_rmse", rot_rmse)
 
                 # ---- Joint position MAE & RMSE ----
                 pos_err = (p_pos - g_pos).reshape(-1, 3)  # (gen_frames*J, 3)
                 pos_abs = pos_err.abs()
                 pos_mae = pos_abs.mean().item()
                 pos_rmse = pos_err.pow(2).mean().sqrt().item()
-                metrics[case]["pos_mae"].append(pos_mae)
-                metrics[case]["pos_rmse"].append(pos_rmse)
+                rec("pos_mae", pos_mae)
+                rec("pos_rmse", pos_rmse)
 
                 # ---- Root position MAE & RMSE ----
                 root_err = (p_pos[:, :, 0, :] - g_pos[:, :, 0, :]).reshape(-1, 3)
                 root_mae = root_err.abs().mean().item()
                 root_rmse = root_err.pow(2).mean().sqrt().item()
-                metrics[case]["root_pos_mae"].append(root_mae)
-                metrics[case]["root_pos_rmse"].append(root_rmse)
+                rec("root_pos_mae", root_mae)
+                rec("root_pos_rmse", root_rmse)
 
                 # ---- NPSS (on generated portion of joint angles as quaternions) ----
                 pq_np = pq_aligned.cpu().numpy().reshape(gen_frames, -1)  # (gen_frames, J*4)
                 gq_aligned_np = gq.cpu().numpy().reshape(gen_frames, -1)
                 if gen_frames >= 4:
                     npss_val = npss(pq_np, gq_aligned_np)
-                    metrics[case]["npss"].append(npss_val)
+                    rec("npss", npss_val)
 
                 # ---- MDC & MDCSS ----
                 fps = int(round(1.0 / skeleton["frame_time"])) if skeleton["frame_time"] > 0 else 30
@@ -232,10 +284,10 @@ def run_benchmark():
                         mdc_gt, mdcss_gt = torch_mdc_mdcss_metrics(
                             fg_pos, bone_lengths, fps, clip_frames
                         )
-                        metrics[case]["mdc_pred"].append(mdc_pred.mean().item())
-                        metrics[case]["mdc_gt"].append(mdc_gt.mean().item())
-                        metrics[case]["mdcss_pred"].append(mdcss_pred.mean().item())
-                        metrics[case]["mdcss_gt"].append(mdcss_gt.mean().item())
+                        rec("mdc_pred", mdc_pred.mean().item())
+                        rec("mdc_gt", mdc_gt.mean().item())
+                        rec("mdcss_pred", mdcss_pred.mean().item())
+                        rec("mdcss_gt", mdcss_gt.mean().item())
                     except Exception as e:
                         print(f"  MDC/MDCSS error for sample {idx}: {e}")
 
@@ -252,17 +304,18 @@ def run_benchmark():
             print(*args, file=out_file, **kwargs)
 
         log_print(f"\nSkipped {skipped} samples (not enough frames).")
-        log_print(f"Evaluated {len(metrics['with_root']['l2p'])} samples.\n")
+        log_print(f"Evaluated {len(metrics[('with_root', ALL)]['l2p'])} samples.")
+        log_print(f"Facing normalization: {dataset.facing_normalization}\n")
 
-        for case in cases:
-            m = metrics[case]
+        for case, ds_name in [(c, d) for c in cases for d in dataset_names + [ALL]]:
+            m = metrics[(case, ds_name)]
             n = len(m["l2p"])
             if n == 0:
-                log_print(f"[{case}] No valid samples.")
+                log_print(f"[{case} / {ds_name}] No valid samples.\n")
                 continue
 
             log_print(f"{'=' * 60}")
-            log_print(f"  Case: {case}")
+            log_print(f"  Case: {case}   Dataset: {ds_name}   (n={n})")
             log_print(f"{'=' * 60}")
             log_print(f"  L2P (mean joint pos error):    {np.mean(m['l2p']):.6f}")
             log_print(f"  L2Q (mean joint quat error):   {np.mean(m['l2q']):.6f}")
@@ -304,7 +357,7 @@ def run_benchmark():
             csv_path = "./benchmarks/benchmarks.csv"
             csv_exists = os.path.isfile(csv_path)
             csv_headers = [
-                "timestamp", "model", "case", "n_samples",
+                "timestamp", "model", "case", "dataset", "n_samples",
                 "l2p", "l2q", "npss",
                 "rot_mae_deg", "rot_rmse_deg",
                 "pos_mae", "pos_rmse",
@@ -312,6 +365,7 @@ def run_benchmark():
                 "mdc_pred", "mdc_gt", "mdc_pct_diff",
                 "mdcss_pred", "mdcss_gt", "mdcss_pct_diff",
             ]
+            _migrate_csv_schema(csv_path, csv_headers)
             with open(csv_path, "a", newline="", encoding="utf-8") as csv_file:
                 writer = csv.DictWriter(csv_file, fieldnames=csv_headers)
                 if not csv_exists:
@@ -320,6 +374,7 @@ def run_benchmark():
                     "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "model": model_name,
                     "case": case,
+                    "dataset": ds_name,
                     "n_samples": n,
                     "l2p": f"{np.mean(m['l2p']):.6f}",
                     "l2q": f"{np.mean(m['l2q']):.6f}",

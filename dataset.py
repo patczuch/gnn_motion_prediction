@@ -5,12 +5,49 @@ import numpy as np
 from torch_geometric.data import Data, Dataset
 from pymotion.io.bvh import BVH
 import pymotion.ops.skeleton as skeleton_ops
+import pymotion.rotations.ortho6d_torch as sixd_torch
+import pymotion.rotations.quat_torch as quat_torch
 
 import config
 
 
 ROT_JUMP_THRESH = 90.0
 POS_JUMP_THRESH = 25.0
+
+UP_AXIS = 1
+
+
+def yaw_rotmat(theta):
+    c, s = torch.cos(theta), torch.sin(theta)
+    z, o = torch.zeros_like(c), torch.ones_like(c)
+    return torch.stack([
+        torch.stack([c, z, s], dim=-1),
+        torch.stack([z, o, z], dim=-1),
+        torch.stack([-s, z, c], dim=-1),
+    ], dim=-2)
+
+
+def root_yaw(rot6_root):
+    R = sixd_torch.to_matrix(rot6_root.reshape(-1, 3, 2))
+    q = quat_torch.from_matrix(R)  # (F, 4) as [w, x, y, z]
+    w, y = q[..., 0], q[..., 2]
+    yaw = 2.0 * torch.atan2(y, w)
+
+    ok = (w * w + y * y) > 1e-6
+    if not bool(ok.all()):
+        order = torch.arange(yaw.shape[0], device=yaw.device)
+        src = torch.cummax(torch.where(ok, order, torch.full_like(order, -1)), dim=0).values
+        yaw = torch.where(src >= 0, yaw[src.clamp(min=0)], torch.zeros_like(yaw))
+    return yaw
+
+
+def rotate_rot6(rot6, R):
+    M = rot6.reshape(rot6.shape[:-1] + (3, 2))
+    return torch.einsum('ij,...jk->...ik', R, M).reshape(rot6.shape)
+
+
+def rotate_vec(v, R):
+    return torch.einsum('ij,...j->...i', R, v)
 
 
 def _quat_to_rotmat(q):
@@ -105,8 +142,10 @@ class BVHMotionDataset(Dataset):
         self.sample_skel = []   # skeleton_id per sample
         self.cache = {}
         self.root_pos_cache = {}
+        self.yaw_cache = {}
         self.skeleton_cache = {}
         self._skel_key_to_id = {}
+        self.facing_normalization = config.facing_normalization
 
         print("Loading dataset...")
         for directory in directories:
@@ -180,6 +219,8 @@ class BVHMotionDataset(Dataset):
 
                 self.cache[filepath] = feats
 
+                self.yaw_cache[filepath] = root_yaw(feats[:, 0, :])
+
                 # Cache root positions: (F, 3)
                 root_pos_np = local_positions[:, 0, :].copy()
                 root_positions = torch.from_numpy(root_pos_np).float()
@@ -231,16 +272,19 @@ class BVHMotionDataset(Dataset):
 
         full_window = feats[start:start + H + gen_frames].reshape(-1, J, rotsize)
 
-        context = full_window[:H].permute(1, 0, 2).reshape(J, H * rotsize)
-        target = full_window[H:H + gen_frames].permute(1, 0, 2).reshape(J, gen_frames * rotsize)
-
-        context = torch.cat([context], dim=1)
-        target = torch.cat([target], dim=1)
-
         # Root positions for context and target
         root_pos_window = root_positions[start:start + H + gen_frames]  # (H+gen_frames, 3)
         root_pos_origin = root_pos_window[0:1]  # (1, 3) — first context frame
         root_pos_window = root_pos_window - root_pos_origin  # delta from first frame
+
+        # Facing normalization
+        if self.facing_normalization:
+            R_inv = yaw_rotmat(-self.yaw_cache[filepath][start + H - 1])
+            full_window = rotate_rot6(full_window, R_inv)
+            root_pos_window = rotate_vec(root_pos_window, R_inv)
+
+        context = full_window[:H].permute(1, 0, 2).reshape(J, H * rotsize)
+        target = full_window[H:H + gen_frames].permute(1, 0, 2).reshape(J, gen_frames * rotsize)
 
         root_pos_context = root_pos_window[:H].reshape(H * 3)           # (H*3,)
         root_pos_target = root_pos_window[H:H + gen_frames].reshape(gen_frames * 3)  # (gen_frames*3,)

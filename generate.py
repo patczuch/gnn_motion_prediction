@@ -4,6 +4,7 @@ import torch
 import numpy as np
 from torch_geometric.data import Data
 from motionpredictor import Model
+from dataset import root_yaw, yaw_rotmat, rotate_rot6, rotate_vec
 from pymotion.io.bvh import BVH
 import pymotion.rotations.ortho6d as sixd
 import pymotion.rotations.ortho6d_torch as sixd_torch
@@ -132,9 +133,18 @@ def main():
                 window_root = all_root[-context_length:]
 
             window_origin = window_root[0:1].clone()  # (1, 3)
-            rpc = (window_root - window_origin).reshape(context_length * 3)
+            window_root = window_root - window_origin
 
-            x_input = context_rotations.permute(1, 0, 2).reshape(J, context_length * rotation_dim)
+            ctx_rot_in = context_rotations
+            if config.facing_normalization:
+                theta = root_yaw(context_rotations[-1, 0:1, :])[0]
+                R_inv, R_fwd = yaw_rotmat(-theta), yaw_rotmat(theta)
+                ctx_rot_in = rotate_rot6(context_rotations, R_inv)
+                window_root = rotate_vec(window_root, R_inv)
+
+            rpc = window_root.reshape(context_length * 3)
+
+            x_input = ctx_rot_in.permute(1, 0, 2).reshape(J, context_length * rotation_dim)
             batch = torch.zeros(J, dtype=torch.long, device=device)
             parents_t = torch.tensor(bvh_data["parents"], dtype=torch.long)
             offsets_t = torch.from_numpy(bvh_data["offsets"]).float()
@@ -146,9 +156,14 @@ def main():
             )
 
             pred_rot, pred_root_pos = model(src_graph)
-            pred_seq = pred_rot.view(J, gen_frames, rotation_dim)
+            pred_seq = pred_rot.view(J, gen_frames, rotation_dim).cpu()
+            pred_root_pos_delta = pred_root_pos.view(gen_frames, 3).cpu()
 
-            pred_root_pos_delta = pred_root_pos.view(gen_frames, 3).cpu() + window_origin
+            if config.facing_normalization:
+                pred_seq = rotate_rot6(pred_seq, R_fwd)
+                pred_root_pos_delta = rotate_vec(pred_root_pos_delta, R_fwd)
+
+            pred_root_pos_delta = pred_root_pos_delta + window_origin
 
             for step in range(gen_frames):
                 pred_step = pred_seq[:, step, :]

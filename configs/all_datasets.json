@@ -9,6 +9,7 @@
     "dropout": 0.05,
     "epochs": 1000,
     "split_seed": 0,
+    "facing_normalization": true,
     "rot_weight": 50.0,
     "pos_weight": 1.0,
     "smooth_weight": 1.0,

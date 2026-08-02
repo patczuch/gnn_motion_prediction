@@ -5,7 +5,7 @@ import torch
 import numpy as np
 from torch_geometric.data import Data
 from motionpredictor import Model
-from dataset import BVHMotionDataset
+from dataset import BVHMotionDataset, yaw_rotmat, rotate_rot6, rotate_vec
 from geodesicloss import GeodesicLoss
 import pymotion.rotations.ortho6d as sixd
 import pymotion.rotations.ortho6d_torch as sixd_torch
@@ -98,12 +98,21 @@ if __name__ == "__main__":
                 context_frames = all_available[-context:]
 
             # Prepare graph input
+            root_pos_ctx_in = root_pos_context
+            if dataset.facing_normalization:
+                theta = dataset.yaw_cache[filepath][start + context - 1]
+                R_inv, R_fwd = yaw_rotmat(-theta), yaw_rotmat(theta).to(device)
+                context_frames = rotate_rot6(context_frames, R_inv)
+                root_pos_ctx_in = rotate_vec(
+                    root_pos_context.view(context, 3), R_inv
+                ).reshape(context * 3)
+
             x_input = context_frames.permute(1, 0, 2).reshape(J, -1).to(device)
             edge_index = skeleton["edges"].to(device)
             batch = torch.zeros(J, dtype=torch.long, device=device)
             src_graph = Data(
                 x=x_input, edge_index=edge_index, batch=batch,
-                root_pos=root_pos_context.to(device),
+                root_pos=root_pos_ctx_in.to(device),
             )
 
             pred_rot, pred_root_pos = model(src_graph)
@@ -111,6 +120,10 @@ if __name__ == "__main__":
 
             # Predicted root pos delta: (gen_frames, 3)
             pred_root_pos_delta = pred_root_pos.view(gen_frames, 3)
+
+            if dataset.facing_normalization:
+                pred_seq = rotate_rot6(pred_seq, R_fwd)
+                pred_root_pos_delta = rotate_vec(pred_root_pos_delta, R_fwd)
 
             gt_start = context
             gt_end = gt_start + gen_frames
