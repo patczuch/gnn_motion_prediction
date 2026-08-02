@@ -11,12 +11,11 @@ import pymotion.rotations.quat as quat
 import pymotion.ops.skeleton as skeleton_ops
 import config
 
-CHECKPOINT_PATH = "./checkpoints/model_20251228-173213-best.pth"
+CHECKPOINT_PATH = config.eval_checkpoint_path
 
-INPUT_BVH_PATH = "./datasets/lafan1eval/jumps1_subject5.bvh"
-INPUT_BONE_LENGTHS_BVH_PATH = "./datasets/lafan1eval/aiming2_subject5.bvh"
+INPUT_BVH_PATH = "./data/eval/lafan1_reduced/aiming2_subject5.bvh"
 
-START_FRAME = 5900
+START_FRAME = 50
 
 NUM_FRAMES_TO_GENERATE = 100
 
@@ -44,10 +43,6 @@ def load_bvh_features(bvh_path):
 
     feats = rot6  # (F, J, 6) - global rotations
 
-    bone_lengths = torch.from_numpy(
-        np.linalg.norm(offsets, axis=1, keepdims=True)
-    ).float()  # (J, 1)
-
     edges = torch.tensor(
         [(parents[j], j) for j in range(1, len(parents))] +
         [(j, parents[j]) for j in range(1, len(parents))]
@@ -66,7 +61,7 @@ def load_bvh_features(bvh_path):
         "frame_time": bvh.data["frame_time"],
     }
 
-    return feats, bone_lengths, edges, bvh_data, root_positions
+    return feats, edges, bvh_data, root_positions
 
 
 def normalize_rotation(rot6):
@@ -92,7 +87,7 @@ def main():
     print(f"Will generate {actual_generated_frames} frames in {num_iterations} iterations")
 
     print(f"\nLoading BVH file: {INPUT_BVH_PATH}")
-    feats, _, edges, bvh_data, root_positions = load_bvh_features(INPUT_BVH_PATH)
+    feats, edges, bvh_data, root_positions = load_bvh_features(INPUT_BVH_PATH)
 
     F, J, _ = feats.shape
     print(f"BVH has {F} frames, {J} joints")
@@ -128,13 +123,16 @@ def main():
         for iteration in range(num_iterations):
             print(f"  Iteration {iteration + 1}/{num_iterations}")
 
-            # Build root_pos_context for this iteration
+            # Build root_pos_context for this iteration.
             if iteration == 0:
-                rpc = root_pos_context_delta.reshape(context_length * 3)
+                window_root = root_pos_context_delta
             else:
                 # Use last (context_length) root positions: mix of gt context + generated
                 all_root = torch.cat([root_pos_context_delta] + [g.unsqueeze(0) for g in generated_root_pos], dim=0)
-                rpc = all_root[-context_length:].reshape(context_length * 3)
+                window_root = all_root[-context_length:]
+
+            window_origin = window_root[0:1].clone()  # (1, 3)
+            rpc = (window_root - window_origin).reshape(context_length * 3)
 
             x_input = context_rotations.permute(1, 0, 2).reshape(J, context_length * rotation_dim)
             batch = torch.zeros(J, dtype=torch.long, device=device)
@@ -150,7 +148,7 @@ def main():
             pred_rot, pred_root_pos = model(src_graph)
             pred_seq = pred_rot.view(J, gen_frames, rotation_dim)
 
-            pred_root_pos_delta = pred_root_pos.view(gen_frames, 3).cpu()
+            pred_root_pos_delta = pred_root_pos.view(gen_frames, 3).cpu() + window_origin
 
             for step in range(gen_frames):
                 pred_step = pred_seq[:, step, :]

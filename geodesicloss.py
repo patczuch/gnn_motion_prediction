@@ -9,12 +9,16 @@ class GeodesicLoss(nn.Module):
         self.reduction = reduction
 
     def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
-        R_diff = torch.matmul(input.transpose(-2, -1), target)
+        with torch.autocast(device_type=input.device.type, enabled=False):
+            input = input.float()
+            target = target.float()
 
-        trace = R_diff.diagonal(offset=0, dim1=-2, dim2=-1).sum(-1)
+            R_diff = torch.matmul(input.transpose(-2, -1), target)
 
-        cos_angle = torch.clamp((trace - 1) / 2, min=-1 + self.eps, max=1 - self.eps)
-        angles = torch.acos(cos_angle)
+            trace = R_diff.diagonal(offset=0, dim1=-2, dim2=-1).sum(-1)
+
+            cos_angle = torch.clamp((trace - 1) / 2, min=-1 + self.eps, max=1 - self.eps)
+            angles = torch.acos(cos_angle)
 
         if self.reduction == "mean":
             return angles.mean()

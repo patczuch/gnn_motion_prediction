@@ -10,7 +10,7 @@ from torch_geometric.loader import DataLoader
 from torch.amp import autocast, GradScaler
 from geodesicloss import GeodesicLoss
 from motionpredictor import Model
-from dataset import BVHMotionDataset
+from dataset import BVHMotionDataset, split_train_val
 import pymotion.rotations.ortho6d_torch as sixd_torch
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import numpy
@@ -167,13 +167,11 @@ if __name__ == "__main__":
                                context=context, step=config.step_size)
 
     val_ratio = 0.2
-    total = len(dataset)
-    all_indices = list(range(total))
-    random.shuffle(all_indices)
-    val_size = int(total * val_ratio)
-    val_indices = set(all_indices[:val_size])
-    train_indices = [i for i in range(total) if i not in val_indices]
-    val_indices = list(val_indices)
+    # Seeded so that resuming from a checkpoint keeps the same split; otherwise
+    # the previous run's validation samples become training samples.
+    train_indices, val_indices, dropped_boundary = split_train_val(
+        dataset, val_ratio=val_ratio, seed=config.split_seed
+    )
 
     batch_size = 512
 
@@ -214,6 +212,7 @@ if __name__ == "__main__":
 
     logger.info(
         f"Train size: {len(train_indices)}, Validation size: {len(val_indices)}, "
+        f"Dropped at split boundaries: {dropped_boundary}, "
         f"Unique skeletons: {len(dataset._skel_key_to_id)}"
     )
 
@@ -230,7 +229,8 @@ if __name__ == "__main__":
     patience = config.early_stopping_patience
     min_delta = config.early_stopping_min_delta
     ckpt_interval = config.checkpoint_interval
-    best_val = float('inf')
+    best_val = float('inf')          # for saving the best checkpoint (strict)
+    best_val_patience = float('inf')  # for early stopping (needs min_delta)
     epochs_no_improve = 0
 
     scaler = GradScaler('cuda')
@@ -251,8 +251,10 @@ if __name__ == "__main__":
 
             with autocast('cuda'):
                 pred_rot, pred_root_pos = model(src_graph)
+
+            with autocast('cuda', enabled=False):
                 loss, rot_loss, pos_loss, smooth_loss, root_pos_loss = compute_loss(
-                    pred_rot, pred_root_pos, tgt_graph, src_graph,
+                    pred_rot.float(), pred_root_pos.float(), tgt_graph, src_graph,
                     rot_loss_fn, pos_loss_fn, rot_weight, pos_weight, smooth_weight, root_pos_weight, transition_weight, config
                 )
 
@@ -294,8 +296,10 @@ if __name__ == "__main__":
 
                 with autocast('cuda'):
                     pred_rot, pred_root_pos = model(src_graph)
+
+                with autocast('cuda', enabled=False):
                     loss, rot_loss, pos_loss, smooth_loss, root_pos_loss = compute_loss(
-                        pred_rot, pred_root_pos, tgt_graph, src_graph,
+                        pred_rot.float(), pred_root_pos.float(), tgt_graph, src_graph,
                         rot_loss_fn, pos_loss_fn, rot_weight, pos_weight, smooth_weight, root_pos_weight, transition_weight, config
                     )
                 val_loss += loss.item()
@@ -324,15 +328,15 @@ if __name__ == "__main__":
             torch.save(model.state_dict(), os.path.join(config.checkpoints_dir, ckpt_name))
             logger.info(f"Saved checkpoint: {ckpt_name}")
 
-        if val_loss + min_delta < best_val:
+        if val_loss < best_val:
             best_val = val_loss
+            best_name = f"model_{start_time}-best.pth"
+            torch.save(model.state_dict(), os.path.join(config.checkpoints_dir, best_name))
+            logger.info(f"New best val loss {best_val:.6f}. Saved: {best_name}")
+
+        if val_loss + min_delta < best_val_patience:
+            best_val_patience = val_loss
             epochs_no_improve = 0
-            if epoch > ckpt_interval:
-                best_name = f"model_{start_time}-best.pth"
-                torch.save(model.state_dict(), os.path.join(config.checkpoints_dir, best_name))
-                logger.info(f"New best val loss {best_val:.6f}. Saved: {best_name}")
-            else:
-                logger.info(f"New best val loss {best_val:.6f}")
         else:
             epochs_no_improve += 1
             if epochs_no_improve >= patience:

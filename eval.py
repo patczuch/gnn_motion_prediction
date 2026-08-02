@@ -18,7 +18,7 @@ from train import positions_from_global_rotmats
 if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    checkpoint_path = "./checkpoints/model_20260603-073719-best.pth"
+    checkpoint_path = config.eval_checkpoint_path
     dataset_paths = config.eval_data_paths
 
     out_dir = "./eval_results"
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     context = config.context_length
     gen_frames = config.gen_frames
     rollout = gen_frames
-    num_samples = 30
+    num_samples = 100
     random.seed(10)
 
     rotation_dim = config.rotation_dim
@@ -118,49 +118,41 @@ if __name__ == "__main__":
             gt_chunk_dev = gt_chunk.to(device)
             gt_seq = gt_chunk_dev.permute(1, 0, 2)
 
+            # Orthonormalize the whole predicted sequence at once
+            pred_mat = sixd_torch.to_matrix(
+                pred_seq.reshape(-1, 3, 2)
+            ).view(J, gen_frames, 3, 3)
+            gt_mat = sixd_torch.to_matrix(
+                gt_seq.reshape(-1, 3, 2)
+            ).view(J, gen_frames, 3, 3)
+
+            for step in range(gen_frames):
+                pred_6d_norm = pred_mat[:, step, :, :2].reshape(J, rotation_dim).cpu()
+                bvh_rots.append(pred_6d_norm)
+                generated_frames.append(pred_6d_norm)
+
+            parents_t = torch.tensor(skeleton["parents"], device=device).long()
+            offsets_t = torch.tensor(skeleton["offsets"], device=device).to(pred_rot.dtype)
+            offsets_b = offsets_t.unsqueeze(0)  # (1, J, 3)
+
+            # FK once for the whole rollout: (1, gen_frames, J, 3, 3)
+            pred_pos_tm = positions_from_global_rotmats(
+                pred_mat.permute(1, 0, 2, 3).unsqueeze(0),
+                pred_root_pos_delta.unsqueeze(0),
+                offsets_b, parents_t,
+            )
+            gt_pos_tm = positions_from_global_rotmats(
+                gt_mat.permute(1, 0, 2, 3).unsqueeze(0),
+                root_pos_gt_delta.to(device).unsqueeze(0),
+                offsets_b, parents_t,
+            )
+
             for step in range(gen_frames):
                 global_step = context + step
-                pred_step = pred_seq[:, step, :]
-                pred_mat = sixd_torch.to_matrix(pred_step.view(-1, 3, 2))
-                pred_6d_norm = pred_mat[..., :3, :2].reshape(J, rotation_dim)
-                bvh_rots.append(pred_6d_norm.cpu())
-                generated_frames.append(pred_6d_norm.cpu())
-
-                gt_step = gt_seq[:, step, :]
-                gt_mat = sixd_torch.to_matrix(gt_step.view(-1, 3, 2))
-
-                rot_loss = rot_loss_fn(pred_mat, gt_mat)
-
-                # Compute position loss from global rotation matrices directly
-                n_so_far = len(generated_frames)
-                all_gen_tensor = torch.stack(
-                    [g.to(device) for g in generated_frames], dim=1
-                )  # (J, n_so_far, rotation_dim)
-                all_gt_target = all_gt_rot[context:context + n_so_far].to(device).permute(1, 0, 2)
-
-                # Convert to rotation matrices: (J, n_so_far, 3, 3)
-                pred_rotmats = sixd_torch.to_matrix(
-                    all_gen_tensor.reshape(-1, 3, 2)
-                ).view(J, n_so_far, 3, 3)
-                gt_rotmats = sixd_torch.to_matrix(
-                    all_gt_target.reshape(-1, 3, 2)
-                ).view(J, n_so_far, 3, 3)
-
-                # Reshape to (1, n_so_far, J, 3, 3)
-                pred_rotmats_tm = pred_rotmats.permute(1, 0, 2, 3).unsqueeze(0)
-                gt_rotmats_tm = gt_rotmats.permute(1, 0, 2, 3).unsqueeze(0)
-
-                parents_t = torch.tensor(skeleton["parents"], device=device).long()
-                offsets_t = torch.tensor(skeleton["offsets"], device=device).to(pred_rot.dtype)
-                offsets_b = offsets_t.unsqueeze(0)  # (1, J, 3)
-
-                pred_global_pos = pred_root_pos_delta[:n_so_far].unsqueeze(0)  # (1, n_so_far, 3)
-                gt_global_pos = root_pos_gt_delta[:n_so_far].to(device).unsqueeze(0)
-
-                pred_pos_tm = positions_from_global_rotmats(pred_rotmats_tm, pred_global_pos, offsets_b, parents_t)
-                gt_pos_tm = positions_from_global_rotmats(gt_rotmats_tm, gt_global_pos, offsets_b, parents_t)
-
-                pos_loss = pos_weight * pos_loss_fn(pred_pos_tm, gt_pos_tm)
+                rot_loss = rot_loss_fn(pred_mat[:, step], gt_mat[:, step])
+                pos_loss = pos_weight * pos_loss_fn(
+                    pred_pos_tm[:, step], gt_pos_tm[:, step]
+                )
                 loss = rot_loss + pos_loss
                 losses.append(loss)
                 print(
@@ -249,7 +241,7 @@ if __name__ == "__main__":
             )
             bvh_gt.save(out_gt)
 
-            print(f"Exported sample {idx} →")
+            print(f"Exported sample {idx} ->")
             print(f"  Generated:   {out_gen}")
             print(f"  GroundTruth: {out_gt}")
             print(f"  Average rollout loss = {avg_loss:.6f}")

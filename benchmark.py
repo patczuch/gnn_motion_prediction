@@ -32,7 +32,7 @@ def npss(pred_signal: np.ndarray, gt_signal: np.ndarray) -> float:
 def run_benchmark():
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-    checkpoint_path = "./checkpoints/model_20260603-073719-best.pth"
+    checkpoint_path = config.eval_checkpoint_path
     model_name = os.path.splitext(os.path.basename(checkpoint_path))[0]
     dataset_paths = config.eval_data_paths
     context = config.context_length
@@ -120,7 +120,7 @@ def run_benchmark():
             offsets_t = torch.tensor(skeleton["offsets"], device=device).to(pred_rot.dtype)
             offsets_b = offsets_t.unsqueeze(0)  # (1, J, 3)
 
-            bone_lengths = offsets_t.norm(dim=-1).unsqueeze(0)  # (1, J)
+            bone_lengths = offsets_t[1:].norm(dim=-1).unsqueeze(0)  # (1, J-1)
 
             # Convert global -> local quats for quaternion-based metrics
             pred_local_quat = skeleton_torch.from_global_rotations(

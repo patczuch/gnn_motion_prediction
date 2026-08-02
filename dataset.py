@@ -1,4 +1,5 @@
 import os
+import random
 import torch
 import numpy as np
 from torch_geometric.data import Data, Dataset
@@ -60,6 +61,39 @@ def window_has_jump(bad_transitions, start, length):
     return False
 
 
+def split_train_val(dataset, val_ratio, seed, block_frames=None):
+    window_len = dataset.context + config.gen_frames
+    if block_frames is None:
+        block_frames = window_len * 8
+
+    blocks = {}
+    dropped = 0
+    for idx, (filepath, start) in enumerate(dataset.samples):
+        block = start // block_frames
+        if (start + window_len - 1) // block_frames != block:
+            dropped += 1  # straddles a boundary; dropping it creates the gap
+            continue
+        blocks.setdefault((filepath, block), []).append(idx)
+
+    keys = sorted(blocks.keys())
+    random.Random(seed).shuffle(keys)
+
+    target = sum(len(blocks[k]) for k in keys) * val_ratio
+    train_indices, val_indices = [], []
+    n_val = 0
+    for k in keys:
+        size = len(blocks[k])
+        if abs(n_val + size - target) < abs(n_val - target):
+            val_indices.extend(blocks[k])
+            n_val += size
+        else:
+            train_indices.extend(blocks[k])
+
+    train_indices.sort()
+    val_indices.sort()
+    return train_indices, val_indices, dropped
+
+
 class BVHMotionDataset(Dataset):
     def __init__(self, directories, context, step):
         super().__init__()
@@ -73,7 +107,6 @@ class BVHMotionDataset(Dataset):
         self.root_pos_cache = {}
         self.skeleton_cache = {}
         self._skel_key_to_id = {}
-        self.get_cache = []
 
         print("Loading dataset...")
         for directory in directories:
@@ -98,7 +131,7 @@ class BVHMotionDataset(Dataset):
                     if bone_rot_order[0] != 'x' or bone_rot_order[1] != 'y' or bone_rot_order[2] != 'z':
                         print(f"  Skipping {fname} (unsupported rot_order {bvh.data['rot_order']})")
                         flag = True
-                        continue
+                        break
                 if flag:
                     continue
 
@@ -107,19 +140,6 @@ class BVHMotionDataset(Dataset):
                     [(parents[j], j) for j in range(1, len(parents))] +
                     [(j, parents[j]) for j in range(1, len(parents))]
                 ).t().long()
-                bone_lengths = torch.from_numpy(
-                    np.linalg.norm(offsets, axis=1, keepdims=True)
-                ).float()
-
-                J = parents.shape[0]
-                ancestor_counts = torch.zeros(J, dtype=torch.float32)
-
-                for j in range(J):
-                    p = parents[j].item()
-                    while p != 0:
-                        ancestor_counts[j] += 1
-                        p = parents[p].item()
-
                 self.skeleton_cache[filepath] = {
                     "offsets": offsets,
                     "parents": parents,
@@ -129,7 +149,6 @@ class BVHMotionDataset(Dataset):
                     "rot_order": bvh.data["rot_order"],
                     "frame_time": bvh.data["frame_time"],
                     "edges": edges,
-                    "bone_lengths": bone_lengths
                 }
 
                 skel_key = (len(parents), tuple(parents))
@@ -175,7 +194,7 @@ class BVHMotionDataset(Dataset):
                 window_len = self.context + config.gen_frames
                 skipped = 0
 
-                for start in range(0, F - window_len, self.step):
+                for start in range(0, F - window_len + 1, self.step):
                     if window_has_jump(bad_transitions, start, window_len):
                         skipped += 1
                         continue
@@ -186,7 +205,6 @@ class BVHMotionDataset(Dataset):
                     print(f"  Skipped {skipped} window(s) containing jumps")
 
         self.sample_skel = np.array(self.sample_skel)
-        self.get_cache = [None for _ in range(len(self.samples))]
         print(f"Dataset ready: {len(self.samples)} samples, {len(self._skel_key_to_id)} unique skeletons")
 
     def __len__(self):
@@ -199,9 +217,6 @@ class BVHMotionDataset(Dataset):
         return self.sample_skel[idx]
 
     def __getitem__(self, idx):
-        if self.get_cache[idx] is not None:
-            return self.get_cache[idx]
-
         filepath, start = self.samples[idx]
         feats = self.cache[filepath]
         root_positions = self.root_pos_cache[filepath]
@@ -245,5 +260,4 @@ class BVHMotionDataset(Dataset):
             root_pos=root_pos_target,
         )
 
-        self.get_cache[idx] = (src_graph, tgt_graph)
         return src_graph, tgt_graph

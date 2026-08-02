@@ -68,8 +68,6 @@ class Model(torch.nn.Module):
             torch.nn.Linear(current_dim // 2, root_pos_output_dim),
         )
 
-        self.eps = 1e-8
-        self.std_min = 1e-4
         self.value_clamp = 10.0
 
     def forward(self, src_graph):
