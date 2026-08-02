@@ -245,6 +245,10 @@ if __name__ == "__main__":
     patience = config.early_stopping_patience
     min_delta = config.early_stopping_min_delta
     ckpt_interval = config.checkpoint_interval
+    # Interval checkpoints exist only for disaster recovery; keep_last_checkpoints
+    # caps how many are retained (0 = keep all). -best/-final are never pruned.
+    keep_last = config.keep_last_checkpoints
+    interval_ckpts = []
     best_val = float('inf')          # for saving the best checkpoint (strict)
     best_val_patience = float('inf')  # for early stopping (needs min_delta)
     epochs_no_improve = 0
@@ -341,8 +345,20 @@ if __name__ == "__main__":
 
         if (epoch + 1) % ckpt_interval == 0:
             ckpt_name = f"model_{start_time}-{epoch + 1}.pth"
-            torch.save(model.state_dict(), os.path.join(config.checkpoints_dir, ckpt_name))
+            ckpt_path = os.path.join(config.checkpoints_dir, ckpt_name)
+            torch.save(model.state_dict(), ckpt_path)
             logger.info(f"Saved checkpoint: {ckpt_name}")
+
+            # Prune only this run's interval checkpoints, oldest first, and only
+            # after the new one is on disk so a crash never leaves us with none.
+            interval_ckpts.append(ckpt_path)
+            while keep_last > 0 and len(interval_ckpts) > keep_last:
+                stale = interval_ckpts.pop(0)
+                try:
+                    os.remove(stale)
+                    logger.info(f"Pruned old checkpoint: {os.path.basename(stale)}")
+                except OSError as e:
+                    logger.warning(f"Could not prune {os.path.basename(stale)}: {e}")
 
         if val_loss < best_val:
             best_val = val_loss

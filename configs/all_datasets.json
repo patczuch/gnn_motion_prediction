@@ -20,6 +20,7 @@
     "early_stopping_patience": 20,
     "early_stopping_min_delta": 0.5,
     "checkpoint_interval": 10,
+    "keep_last_checkpoints": 2,
     "logs_dir": "./logs",
     "checkpoints_dir": "./checkpoints",
     "checkpoint_path": "",
