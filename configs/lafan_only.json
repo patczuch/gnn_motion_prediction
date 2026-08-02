@@ -18,7 +18,7 @@
     "root_pos_weight": 0.01,
     "grad_clip_norm": 1.0,
     "early_stopping_patience": 20,
-    "early_stopping_min_delta": 0.001,
+    "early_stopping_min_delta": 0.5,
     "checkpoint_interval": 10,
     "logs_dir": "./logs",
     "checkpoints_dir": "./checkpoints",

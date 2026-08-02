@@ -216,6 +216,22 @@ if __name__ == "__main__":
         f"Unique skeletons: {len(dataset._skel_key_to_id)}"
     )
 
+    # Record every hyperparameter that shaped this run, including the ones that
+    # live only in this file, so a log can be compared against later runs.
+    logger.info(
+        "Hyperparameters | " + ", ".join(
+            f"{k}={getattr(config, k)}" for k in (
+                "step_size", "context_length", "gen_frames", "hid_lyrs", "head_num",
+                "dropout", "facing_normalization", "skeleton_geometry", "split_seed",
+                "rot_weight", "pos_weight", "smooth_weight", "transition_weight",
+                "root_pos_weight", "grad_clip_norm",
+                "early_stopping_patience", "early_stopping_min_delta", "epochs",
+            )
+        )
+        + f", batch_size={batch_size}, lr={optimizer.param_groups[0]['lr']}"
+        + f", val_ratio={val_ratio}, params={sum(p.numel() for p in model.parameters())}"
+    )
+
     rotation_dim = config.rotation_dim
     feature_dim = rotation_dim
     gen_frames = config.gen_frames
