@@ -13,7 +13,8 @@ import pymotion.ops.skeleton as skeleton_ops
 from pymotion.io.bvh import BVH
 import pymotion.rotations.quat as quat
 import config
-from train import positions_from_global_rotmats
+from kinematics import (positions_from_global_rotmats, to_global_rotmats,
+                        to_local_quats_np, facing_rotate_rot6)
 
 if __name__ == "__main__":
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -45,7 +46,7 @@ if __name__ == "__main__":
     print(f"Loaded dataset with {len(dataset)} samples")
     print(f"Testing model: {checkpoint_path}")
 
-    test_indices = random.sample(range(len(dataset)), num_samples)
+    test_indices = random.sample(range(len(dataset)), min(num_samples, len(dataset)))
     all_losses = []
 
     total_frames = context + rollout
@@ -102,7 +103,8 @@ if __name__ == "__main__":
             if dataset.facing_normalization:
                 theta = dataset.yaw_cache[filepath][start + context - 1]
                 R_inv, R_fwd = yaw_rotmat(-theta), yaw_rotmat(theta).to(device)
-                context_frames = rotate_rot6(context_frames, R_inv)
+                # (context, J, 6)
+                context_frames = facing_rotate_rot6(context_frames, R_inv, joint_dim=-2)
                 root_pos_ctx_in = rotate_vec(
                     root_pos_context.view(context, 3), R_inv
                 ).reshape(context * 3)
@@ -125,7 +127,8 @@ if __name__ == "__main__":
             pred_root_pos_delta = pred_root_pos.view(gen_frames, 3)
 
             if dataset.facing_normalization:
-                pred_seq = rotate_rot6(pred_seq, R_fwd)
+                # (J, gen_frames, 6)
+                pred_seq = facing_rotate_rot6(pred_seq, R_fwd, joint_dim=-3)
                 pred_root_pos_delta = rotate_vec(pred_root_pos_delta, R_fwd)
 
             gt_start = context
@@ -153,12 +156,12 @@ if __name__ == "__main__":
 
             # FK once for the whole rollout: (1, gen_frames, J, 3, 3)
             pred_pos_tm = positions_from_global_rotmats(
-                pred_mat.permute(1, 0, 2, 3).unsqueeze(0),
+                to_global_rotmats(pred_mat.permute(1, 0, 2, 3).unsqueeze(0), parents_t),
                 pred_root_pos_delta.unsqueeze(0),
                 offsets_b, parents_t,
             )
             gt_pos_tm = positions_from_global_rotmats(
-                gt_mat.permute(1, 0, 2, 3).unsqueeze(0),
+                to_global_rotmats(gt_mat.permute(1, 0, 2, 3).unsqueeze(0), parents_t),
                 root_pos_gt_delta.to(device).unsqueeze(0),
                 offsets_b, parents_t,
             )
@@ -183,19 +186,19 @@ if __name__ == "__main__":
             bvh_rots = torch.stack(bvh_rots)
             bvh_rots_gt = torch.stack(bvh_rots_gt)
 
-            # Convert global 6D -> global quats -> local quats for BVH export
+            # Convert 6D -> quats -> local quats for BVH export
             ortho6 = bvh_rots.view(-1, 3, 2).cpu().numpy()
             ortho6_gt = bvh_rots_gt.view(-1, 3, 2).cpu().numpy()
 
             T_total, Jb, D = bvh_rots.shape
             assert T_total == total_frames and Jb == J and D == rotation_dim
 
-            global_quats = sixd.to_quat(ortho6).reshape(T_total, J, 4)
-            global_quats_gt = sixd.to_quat(ortho6_gt).reshape(T_total, J, 4)
+            feat_quats = sixd.to_quat(ortho6).reshape(T_total, J, 4)
+            feat_quats_gt = sixd.to_quat(ortho6_gt).reshape(T_total, J, 4)
 
-            # Convert global rotations to local rotations for BVH
-            local_quats = skeleton_ops.from_global_rotations(global_quats, skeleton["parents"])
-            local_quats_gt = skeleton_ops.from_global_rotations(global_quats_gt, skeleton["parents"])
+            # BVH stores local rotations; no-op when the model predicts them
+            local_quats = to_local_quats_np(feat_quats, skeleton["parents"])
+            local_quats_gt = to_local_quats_np(feat_quats_gt, skeleton["parents"])
 
             eulers = quat.to_euler(
                 local_quats,

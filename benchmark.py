@@ -9,8 +9,9 @@ from motionpredictor import Model
 from dataset import BVHMotionDataset, yaw_rotmat, rotate_rot6, rotate_vec
 import pymotion.rotations.ortho6d_torch as sixd_torch
 import pymotion.rotations.quat_torch as quat_torch
-import pymotion.ops.skeleton_torch as skeleton_torch
-from train import positions_from_global_rotmats
+from kinematics import (positions_from_global_rotmats, to_global_rotmats,
+                        to_local_quats_torch, bone_lengths_from_offsets,
+                        facing_rotate_rot6)
 from mdc_mdcss import torch_mdc_mdcss_metrics
 import config
 
@@ -122,7 +123,8 @@ def run_benchmark():
             if dataset.facing_normalization:
                 theta = dataset.yaw_cache[filepath][start + context - 1]
                 R_inv, R_fwd = yaw_rotmat(-theta), yaw_rotmat(theta).to(device)
-                context_frames = rotate_rot6(context_frames, R_inv)
+                # (context, J, 6) -- joints on axis -2
+                context_frames = facing_rotate_rot6(context_frames, R_inv, joint_dim=-2)
                 root_pos_ctx_in = rotate_vec(
                     root_pos_context.view(context, 3), R_inv
                 ).reshape(context * 3)
@@ -145,7 +147,8 @@ def run_benchmark():
             pred_root_pos_delta = pred_root_pos.view(1, gen_frames, 3)
 
             if dataset.facing_normalization:
-                pred_seq = rotate_rot6(pred_seq, R_fwd)
+                # (J, gen_frames, 6) -- joints on axis -3
+                pred_seq = facing_rotate_rot6(pred_seq, R_fwd, joint_dim=-3)
                 pred_root_pos_delta = rotate_vec(pred_root_pos_delta, R_fwd)
             # GT root pos delta: (1, gen_frames, 3)
             gt_root_pos_delta = root_pos_gt_delta.unsqueeze(0).to(device)
@@ -165,19 +168,18 @@ def run_benchmark():
             offsets_t = torch.tensor(skeleton["offsets"], device=device).to(pred_rot.dtype)
             offsets_b = offsets_t.unsqueeze(0)  # (1, J, 3)
 
-            bone_lengths = offsets_t[1:].norm(dim=-1).unsqueeze(0)  # (1, J-1)
+            bone_lengths = bone_lengths_from_offsets(offsets_t).unsqueeze(0)  # (1, J-1)
 
-            # Convert global -> local quats for quaternion-based metrics
-            pred_local_quat = skeleton_torch.from_global_rotations(
+            pred_local_quat = to_local_quats_torch(
                 pred_global_quat.permute(1, 0, 2), parents_t
             ).permute(1, 0, 2)  # (J, gen_frames, 4)
-            gt_local_quat = skeleton_torch.from_global_rotations(
+            gt_local_quat = to_local_quats_torch(
                 gt_global_quat.permute(1, 0, 2), parents_t
             ).permute(1, 0, 2)  # (J, gen_frames, 4)
 
-            # Compute positions from global rotation matrices
-            pred_R_tm = pred_mat.permute(1, 0, 2, 3).unsqueeze(0)  # (1, gen_frames, J, 3, 3)
-            gt_R_tm = gt_mat.permute(1, 0, 2, 3).unsqueeze(0)
+            # Compute positions from rotation matrices
+            pred_R_tm = to_global_rotmats(pred_mat.permute(1, 0, 2, 3).unsqueeze(0), parents_t)
+            gt_R_tm = to_global_rotmats(gt_mat.permute(1, 0, 2, 3).unsqueeze(0), parents_t)
 
             pred_global_pos = pred_root_pos_delta  # (1, gen_frames, 3)
             gt_global_pos = gt_root_pos_delta      # (1, gen_frames, 3)
@@ -193,8 +195,8 @@ def run_benchmark():
             full_pred_mat = torch.cat([ctx_mat, pred_mat.permute(1, 0, 2, 3)], dim=0)  # (total_frames, J, 3, 3)
             full_gt_mat = sixd_torch.to_matrix(all_gt_rot.to(device).reshape(-1, 3, 2)).view(total_frames, J, 3, 3)
 
-            full_pred_R = full_pred_mat.unsqueeze(0)  # (1, total_frames, J, 3, 3)
-            full_gt_R = full_gt_mat.unsqueeze(0)
+            full_pred_R = to_global_rotmats(full_pred_mat.unsqueeze(0), parents_t)  # (1, T, J, 3, 3)
+            full_gt_R = to_global_rotmats(full_gt_mat.unsqueeze(0), parents_t)
 
             ctx_root_delta = root_pos_window_delta[:context].to(device)  # (context, 3)
             full_pred_root = torch.cat([ctx_root_delta, pred_root_pos_delta.squeeze(0)], dim=0).unsqueeze(0)
@@ -308,7 +310,9 @@ def run_benchmark():
 
         log_print(f"\nSkipped {skipped} samples (not enough frames).")
         log_print(f"Evaluated {len(metrics[('with_root', ALL)]['l2p'])} samples.")
-        log_print(f"Facing normalization: {dataset.facing_normalization}\n")
+        log_print(f"Facing normalization: {dataset.facing_normalization}")
+        log_print(f"Rotations: {'global' if config.global_rotations else 'local'}   "
+                  f"Skeleton geometry: {dataset.skeleton_geometry}\n")
 
         for case, ds_name in [(c, d) for c in cases for d in dataset_names + [ALL]]:
             m = metrics[(case, ds_name)]

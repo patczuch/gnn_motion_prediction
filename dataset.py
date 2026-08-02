@@ -166,6 +166,8 @@ class BVHMotionDataset(Dataset):
         self._skel_key_to_id = {}
         self.facing_normalization = config.facing_normalization
         self.skeleton_geometry = config.skeleton_geometry
+        self.global_rotations = config.global_rotations
+        self.fps_cache = {}
 
         print("Loading dataset...")
         for directory in directories:
@@ -216,31 +218,37 @@ class BVHMotionDataset(Dataset):
                     self._skel_key_to_id[skel_key] = len(self._skel_key_to_id)
                 skel_id = self._skel_key_to_id[skel_key]
 
-                cache_path = filepath + ".globalfeat.pt"
+                kind = "global" if self.global_rotations else "local"
+                cache_path = f"{filepath}.{kind}feat.pt"
 
                 if os.path.exists(cache_path):
                     feats = torch.load(cache_path)
-                    print("  loaded precomputed global rotation features")
+                    print(f"  loaded precomputed {kind} rotation features")
                 else:
-                    # Compute global rotations via FK
-                    F_total = rotations_quat.shape[0]
-                    global_pos_np = np.zeros((F_total, 3), dtype=np.float32)
-                    offsets_expanded = np.tile(offsets, (F_total, 1, 1))
-                    _, global_rotmats = skeleton_ops.fk(
-                        rotations_quat, global_pos_np, offsets_expanded, parents
-                    )
-                    # global_rotmats: (F, J, 3, 3) -> convert to 6D
-                    global_6d = global_rotmats[..., :2]  # (F, J, 3, 2)
-                    rot6 = torch.from_numpy(global_6d.copy()).float()
+                    if self.global_rotations:
+                        F_total = rotations_quat.shape[0]
+                        global_pos_np = np.zeros((F_total, 3), dtype=np.float32)
+                        offsets_expanded = np.tile(offsets, (F_total, 1, 1))
+                        _, rotmats = skeleton_ops.fk(
+                            rotations_quat, global_pos_np, offsets_expanded, parents
+                        )
+                    else:
+                        rotmats = _quat_to_rotmat(rotations_quat)
+
+                    # rotmats: (F, J, 3, 3) -> convert to 6D
+                    rot6 = torch.from_numpy(rotmats[..., :2].copy()).float()
                     rot6 = rot6.reshape(rot6.shape[0], rot6.shape[1], -1)  # (F, J, 6)
 
                     feats = rot6
                     torch.save(feats, cache_path)
-                    print("  computed and cached global rotation features")
+                    print(f"  computed and cached {kind} rotation features")
 
                 self.cache[filepath] = feats
 
                 self.yaw_cache[filepath] = root_yaw(feats[:, 0, :])
+
+                frame_time = bvh.data["frame_time"]
+                self.fps_cache[filepath] = float(round(1.0 / frame_time)) if frame_time > 0 else 30.0
 
                 # Cache root positions: (F, 3)
                 root_pos_np = local_positions[:, 0, :].copy()
@@ -300,8 +308,10 @@ class BVHMotionDataset(Dataset):
 
         # Facing normalization
         if self.facing_normalization:
+            from kinematics import facing_rotate_rot6
+
             R_inv = yaw_rotmat(-self.yaw_cache[filepath][start + H - 1])
-            full_window = rotate_rot6(full_window, R_inv)
+            full_window = facing_rotate_rot6(full_window, R_inv)  # (T, J, 6)
             root_pos_window = rotate_vec(root_pos_window, R_inv)
 
         context = full_window[:H].permute(1, 0, 2).reshape(J, H * rotsize)
@@ -322,6 +332,7 @@ class BVHMotionDataset(Dataset):
             x=context, edge_index=edges, batch=batch,
             parents=parents_t, offsets=offsets_t,
             root_pos=root_pos_context,
+            fps=torch.tensor([self.fps_cache[filepath]], dtype=torch.float32),
         )
         tgt_graph = Data(
             x=target, edge_index=edges, batch=batch,

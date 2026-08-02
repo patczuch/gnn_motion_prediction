@@ -5,7 +5,8 @@ import numpy as np
 from torch_geometric.data import Data
 from motionpredictor import Model
 from dataset import (root_yaw, yaw_rotmat, rotate_rot6, rotate_vec,
-                     skeleton_geometry_features)
+                     skeleton_geometry_features, _quat_to_rotmat)
+from kinematics import to_local_quats_np, facing_rotate_rot6
 from pymotion.io.bvh import BVH
 import pymotion.rotations.ortho6d as sixd
 import pymotion.rotations.ortho6d_torch as sixd_torch
@@ -31,19 +32,19 @@ def load_bvh_features(bvh_path):
 
     rotations_quat, local_positions, parents, offsets, end_sites, end_sites_parents = bvh.get_data()
 
-    # Compute global rotations via FK
-    F_total = rotations_quat.shape[0]
-    global_pos_np = np.zeros((F_total, 3), dtype=np.float32)
-    offsets_expanded = np.tile(offsets, (F_total, 1, 1))
-    _, global_rotmats = skeleton_ops.fk(
-        rotations_quat, global_pos_np, offsets_expanded, parents
-    )
-    # global_rotmats: (F, J, 3, 3) -> 6D
-    global_6d = global_rotmats[..., :2]  # (F, J, 3, 2)
-    rot6 = torch.from_numpy(global_6d.copy()).float()
-    rot6 = rot6.reshape(rot6.shape[0], rot6.shape[1], -1)  # (F, J, 6)
+    if config.global_rotations:
+        F_total = rotations_quat.shape[0]
+        global_pos_np = np.zeros((F_total, 3), dtype=np.float32)
+        offsets_expanded = np.tile(offsets, (F_total, 1, 1))
+        _, rotmats = skeleton_ops.fk(
+            rotations_quat, global_pos_np, offsets_expanded, parents
+        )
+    else:
+        rotmats = _quat_to_rotmat(rotations_quat)
 
-    feats = rot6  # (F, J, 6) - global rotations
+    # rotmats: (F, J, 3, 3) -> 6D
+    rot6 = torch.from_numpy(rotmats[..., :2].copy()).float()
+    feats = rot6.reshape(rot6.shape[0], rot6.shape[1], -1)  # (F, J, 6)
 
     edges = torch.tensor(
         [(parents[j], j) for j in range(1, len(parents))] +
@@ -140,7 +141,8 @@ def main():
             if config.facing_normalization:
                 theta = root_yaw(context_rotations[-1, 0:1, :])[0]
                 R_inv, R_fwd = yaw_rotmat(-theta), yaw_rotmat(theta)
-                ctx_rot_in = rotate_rot6(context_rotations, R_inv)
+                # (context, J, 6)
+                ctx_rot_in = facing_rotate_rot6(context_rotations, R_inv, joint_dim=-2)
                 window_root = rotate_vec(window_root, R_inv)
 
             rpc = window_root.reshape(context_length * 3)
@@ -165,7 +167,8 @@ def main():
             pred_root_pos_delta = pred_root_pos.view(gen_frames, 3).cpu()
 
             if config.facing_normalization:
-                pred_seq = rotate_rot6(pred_seq, R_fwd)
+                # (J, gen_frames, 6)
+                pred_seq = facing_rotate_rot6(pred_seq, R_fwd, joint_dim=-3)
                 pred_root_pos_delta = rotate_vec(pred_root_pos_delta, R_fwd)
 
             pred_root_pos_delta = pred_root_pos_delta + window_origin
@@ -194,10 +197,10 @@ def main():
 
     bvh_rots = torch.stack(all_frames)  # (total_frames, J, rotation_dim)
 
-    # Convert global 6D -> global quats -> local quats for BVH export
+    # Convert 6D -> quats -> local quats for BVH export
     ortho6 = bvh_rots.view(-1, 3, 2).cpu().numpy()
-    global_quats = sixd.to_quat(ortho6).reshape(total_frames, J, 4)
-    local_quats = skeleton_ops.from_global_rotations(global_quats, bvh_data["parents"])
+    feat_quats = sixd.to_quat(ortho6).reshape(total_frames, J, 4)
+    local_quats = to_local_quats_np(feat_quats, bvh_data["parents"])
 
     eulers = quat.to_euler(
         local_quats,
