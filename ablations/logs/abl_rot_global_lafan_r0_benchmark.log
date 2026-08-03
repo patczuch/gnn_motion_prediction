@@ -94,7 +94,7 @@ S4_freestyle1_BlenderZXY_YmZ.bvh (5/5)
   1 bad transition(s) detected, affected windows will be skipped
   Skipped 7 window(s) containing jumps
 Dataset ready: 2250 samples, 5 unique skeletons
-Checkpoint: ./checkpoints/model_20260802-231339-best.pth
+Checkpoint: ./checkpoints/model_20260803-201446-best.pth
 Test samples: 2250
 Context: 50, Gen frames: 15
   Processed 500/2250 samples...
@@ -111,228 +111,228 @@ Rotations: global   Skeleton geometry: True
 ============================================================
   Case: with_root   Dataset: ACAAD   (n=296)
 ============================================================
-  L2P (mean joint pos error):    31.559911
-  L2Q (mean joint quat error):   0.281922
-  NPSS:                          0.023806
-  Joint Rotation MAE (deg):      32.953888
-  Joint Rotation RMSE (deg):     41.552951
-  Joint Position MAE:            14.962005
-  Joint Position RMSE:           22.936987
-  Root Position MAE:             8.893899
-  Root Position RMSE:            13.845877
-  MDC (pred):                    2.618639
+  L2P (mean joint pos error):    19.710834
+  L2Q (mean joint quat error):   0.247320
+  NPSS:                          0.021656
+  Joint Rotation MAE (deg):      28.763713
+  Joint Rotation RMSE (deg):     35.808504
+  Joint Position MAE:            9.901835
+  Joint Position RMSE:           13.615871
+  Root Position MAE:             5.804999
+  Root Position RMSE:            7.785145
+  MDC (pred):                    1.485370
   MDC (gt):                      0.120711
-  MDC (pred-gt %):               2128.6177%
-  MDCSS (pred):                  7.238355
+  MDC (pred-gt %):               1154.7622%
+  MDCSS (pred):                  5.667493
   MDCSS (gt):                    0.435991
-  MDCSS (pred-gt %):             1705.2460%
+  MDCSS (pred-gt %):             1323.6338%
 
 ============================================================
   Case: with_root   Dataset: lafan1_reduced   (n=228)
 ============================================================
-  L2P (mean joint pos error):    12.601253
-  L2Q (mean joint quat error):   0.161558
-  NPSS:                          0.017630
-  Joint Rotation MAE (deg):      18.577074
-  Joint Rotation RMSE (deg):     22.077936
-  Joint Position MAE:            6.162229
-  Joint Position RMSE:           9.117200
-  Root Position MAE:             4.616630
-  Root Position RMSE:            6.254460
-  MDC (pred):                    0.175764
+  L2P (mean joint pos error):    8.650591
+  L2Q (mean joint quat error):   0.134607
+  NPSS:                          0.014759
+  Joint Rotation MAE (deg):      15.473739
+  Joint Rotation RMSE (deg):     19.540325
+  Joint Position MAE:            4.243637
+  Joint Position RMSE:           6.587466
+  Root Position MAE:             2.900227
+  Root Position RMSE:            4.056575
+  MDC (pred):                    0.106062
   MDC (gt):                      0.091962
-  MDC (pred-gt %):               187.7041%
-  MDCSS (pred):                  1.007697
+  MDC (pred-gt %):               41.0540%
+  MDCSS (pred):                  0.701892
   MDCSS (gt):                    0.572651
-  MDCSS (pred-gt %):             181.9710%
+  MDCSS (pred-gt %):             57.7139%
 
 ============================================================
   Case: with_root   Dataset: pfnn   (n=723)
 ============================================================
-  L2P (mean joint pos error):    41.721525
-  L2Q (mean joint quat error):   0.323912
-  NPSS:                          0.017959
-  Joint Rotation MAE (deg):      37.573915
-  Joint Rotation RMSE (deg):     44.731197
-  Joint Position MAE:            20.078595
-  Joint Position RMSE:           28.926593
-  Root Position MAE:             14.272290
-  Root Position RMSE:            20.472404
-  MDC (pred):                    2.717777
+  L2P (mean joint pos error):    28.033726
+  L2Q (mean joint quat error):   0.317436
+  NPSS:                          0.017859
+  Joint Rotation MAE (deg):      36.781218
+  Joint Rotation RMSE (deg):     43.227349
+  Joint Position MAE:            14.091214
+  Joint Position RMSE:           18.565874
+  Root Position MAE:             9.359082
+  Root Position RMSE:            12.437690
+  MDC (pred):                    2.163605
   MDC (gt):                      0.091641
-  MDC (pred-gt %):               4492.6599%
-  MDCSS (pred):                  10.033711
+  MDC (pred-gt %):               3610.2105%
+  MDCSS (pred):                  7.781282
   MDCSS (gt):                    0.558422
-  MDCSS (pred-gt %):             2992.0743%
+  MDCSS (pred-gt %):             2322.7630%
 
 ============================================================
   Case: with_root   Dataset: SFU   (n=142)
 ============================================================
-  L2P (mean joint pos error):    38.759250
-  L2Q (mean joint quat error):   0.245095
-  NPSS:                          0.027136
-  Joint Rotation MAE (deg):      28.337436
-  Joint Rotation RMSE (deg):     34.472357
-  Joint Position MAE:            18.372609
-  Joint Position RMSE:           26.661911
-  Root Position MAE:             14.643967
-  Root Position RMSE:            21.217104
-  MDC (pred):                    1.650467
+  L2P (mean joint pos error):    26.883925
+  L2Q (mean joint quat error):   0.238443
+  NPSS:                          0.029170
+  Joint Rotation MAE (deg):      27.525659
+  Joint Rotation RMSE (deg):     33.123569
+  Joint Position MAE:            13.462129
+  Joint Position RMSE:           17.916358
+  Root Position MAE:             10.611384
+  Root Position RMSE:            14.177843
+  MDC (pred):                    1.101780
   MDC (gt):                      0.068449
-  MDC (pred-gt %):               2678.7243%
-  MDCSS (pred):                  5.927278
+  MDC (pred-gt %):               1826.3337%
+  MDCSS (pred):                  4.734999
   MDCSS (gt):                    0.386479
-  MDCSS (pred-gt %):             1746.1694%
+  MDCSS (pred-gt %):             1429.4166%
 
 ============================================================
   Case: with_root   Dataset: TotalCapture   (n=861)
 ============================================================
-  L2P (mean joint pos error):    35.456198
-  L2Q (mean joint quat error):   0.183094
-  NPSS:                          0.025463
-  Joint Rotation MAE (deg):      21.127275
-  Joint Rotation RMSE (deg):     27.193397
-  Joint Position MAE:            16.872598
-  Joint Position RMSE:           24.152200
-  Root Position MAE:             14.121194
-  Root Position RMSE:            20.964126
-  MDC (pred):                    2.253333
+  L2P (mean joint pos error):    21.053659
+  L2Q (mean joint quat error):   0.192857
+  NPSS:                          0.025798
+  Joint Rotation MAE (deg):      22.269367
+  Joint Rotation RMSE (deg):     29.021126
+  Joint Position MAE:            10.302414
+  Joint Position RMSE:           14.950772
+  Root Position MAE:             6.901413
+  Root Position RMSE:            9.567868
+  MDC (pred):                    1.624578
   MDC (gt):                      0.068950
-  MDC (pred-gt %):               8944.3025%
-  MDCSS (pred):                  5.996522
+  MDC (pred-gt %):               5908.8856%
+  MDCSS (pred):                  6.308068
   MDCSS (gt):                    0.400258
-  MDCSS (pred-gt %):             5303.5827%
+  MDCSS (pred-gt %):             5524.7643%
 
 ============================================================
   Case: with_root   Dataset: ALL   (n=2250)
 ============================================================
-  L2P (mean joint pos error):    34.849370
-  L2Q (mean joint quat error):   0.243076
-  NPSS:                          0.022146
-  Joint Rotation MAE (deg):      28.164606
-  Joint Rotation RMSE (deg):     34.658973
-  Joint Position MAE:            16.660793
-  Joint Position RMSE:           24.161347
-  Root Position MAE:             12.551930
-  Root Position RMSE:            18.395060
-  MDC (pred):                    2.202058
+  L2P (mean joint pos error):    22.231042
+  L2Q (mean joint quat error):   0.237028
+  NPSS:                          0.021796
+  Joint Rotation MAE (deg):      27.429982
+  Joint Rotation RMSE (deg):     33.777165
+  Joint Position MAE:            11.052640
+  Joint Position RMSE:           15.276491
+  Root Position MAE:             7.375592
+  Root Position RMSE:            9.987973
+  MDC (pred):                    1.592601
   MDC (gt):                      0.085351
-  MDC (pred-gt %):               5334.4372%
-  MDCSS (pred):                  6.947271
+  MDC (pred-gt %):               3692.5520%
+  MDCSS (pred):                  6.029819
   MDCSS (gt):                    0.472382
-  MDCSS (pred-gt %):             3343.9345%
+  MDCSS (pred-gt %):             3130.7161%
 
 ============================================================
   Case: no_root   Dataset: ACAAD   (n=296)
 ============================================================
-  L2P (mean joint pos error):    30.631283
-  L2Q (mean joint quat error):   0.281922
-  NPSS:                          0.023806
-  Joint Rotation MAE (deg):      32.953888
-  Joint Rotation RMSE (deg):     41.552951
-  Joint Position MAE:            14.557737
-  Joint Position RMSE:           22.712933
+  L2P (mean joint pos error):    19.166710
+  L2Q (mean joint quat error):   0.247320
+  NPSS:                          0.021656
+  Joint Rotation MAE (deg):      28.763713
+  Joint Rotation RMSE (deg):     35.808504
+  Joint Position MAE:            9.637972
+  Joint Position RMSE:           13.498469
   Root Position MAE:             0.000000
   Root Position RMSE:            0.000000
-  MDC (pred):                    2.618628
+  MDC (pred):                    1.485358
   MDC (gt):                      0.120698
-  MDC (pred-gt %):               2128.7300%
-  MDCSS (pred):                  7.238381
+  MDC (pred-gt %):               1154.8110%
+  MDCSS (pred):                  5.667532
   MDCSS (gt):                    0.436027
-  MDCSS (pred-gt %):             1705.0987%
+  MDCSS (pred-gt %):             1323.5051%
 
 ============================================================
   Case: no_root   Dataset: lafan1_reduced   (n=228)
 ============================================================
-  L2P (mean joint pos error):    12.174446
-  L2Q (mean joint quat error):   0.161558
-  NPSS:                          0.017630
-  Joint Rotation MAE (deg):      18.577074
-  Joint Rotation RMSE (deg):     22.077936
-  Joint Position MAE:            5.952382
-  Joint Position RMSE:           9.009599
+  L2P (mean joint pos error):    8.379652
+  L2Q (mean joint quat error):   0.134607
+  NPSS:                          0.014759
+  Joint Rotation MAE (deg):      15.473739
+  Joint Rotation RMSE (deg):     19.540325
+  Joint Position MAE:            4.111808
+  Joint Position RMSE:           6.524124
   Root Position MAE:             0.000000
   Root Position RMSE:            0.000000
-  MDC (pred):                    0.175725
+  MDC (pred):                    0.106012
   MDC (gt):                      0.091918
-  MDC (pred-gt %):               187.7187%
-  MDCSS (pred):                  1.007659
+  MDC (pred-gt %):               41.0473%
+  MDCSS (pred):                  0.701843
   MDCSS (gt):                    0.572553
-  MDCSS (pred-gt %):             181.9854%
+  MDCSS (pred-gt %):             57.7201%
 
 ============================================================
   Case: no_root   Dataset: pfnn   (n=723)
 ============================================================
-  L2P (mean joint pos error):    40.498089
-  L2Q (mean joint quat error):   0.323912
-  NPSS:                          0.017959
-  Joint Rotation MAE (deg):      37.573915
-  Joint Rotation RMSE (deg):     44.731197
-  Joint Position MAE:            19.507703
-  Joint Position RMSE:           28.626996
+  L2P (mean joint pos error):    27.289569
+  L2Q (mean joint quat error):   0.317436
+  NPSS:                          0.017859
+  Joint Rotation MAE (deg):      36.781218
+  Joint Rotation RMSE (deg):     43.227349
+  Joint Position MAE:            13.716851
+  Joint Position RMSE:           18.389503
   Root Position MAE:             0.000000
   Root Position RMSE:            0.000000
-  MDC (pred):                    2.717777
+  MDC (pred):                    2.163605
   MDC (gt):                      0.091641
-  MDC (pred-gt %):               4492.6599%
-  MDCSS (pred):                  10.033711
+  MDC (pred-gt %):               3610.2105%
+  MDCSS (pred):                  7.781282
   MDCSS (gt):                    0.558422
-  MDCSS (pred-gt %):             2992.0743%
+  MDCSS (pred-gt %):             2322.7630%
 
 ============================================================
   Case: no_root   Dataset: SFU   (n=142)
 ============================================================
-  L2P (mean joint pos error):    37.254922
-  L2Q (mean joint quat error):   0.245095
-  NPSS:                          0.027136
-  Joint Rotation MAE (deg):      28.337436
-  Joint Rotation RMSE (deg):     34.472357
-  Joint Position MAE:            17.675277
-  Joint Position RMSE:           26.246343
+  L2P (mean joint pos error):    25.878887
+  L2Q (mean joint quat error):   0.238443
+  NPSS:                          0.029170
+  Joint Rotation MAE (deg):      27.525659
+  Joint Rotation RMSE (deg):     33.123569
+  Joint Position MAE:            12.956825
+  Joint Position RMSE:           17.639735
   Root Position MAE:             0.000000
   Root Position RMSE:            0.000000
-  MDC (pred):                    1.650467
+  MDC (pred):                    1.101778
   MDC (gt):                      0.068449
-  MDC (pred-gt %):               2678.7412%
-  MDCSS (pred):                  5.927279
+  MDC (pred-gt %):               1826.3434%
+  MDCSS (pred):                  4.734998
   MDCSS (gt):                    0.386480
-  MDCSS (pred-gt %):             1746.1689%
+  MDCSS (pred-gt %):             1429.4150%
 
 ============================================================
   Case: no_root   Dataset: TotalCapture   (n=861)
 ============================================================
-  L2P (mean joint pos error):    34.127682
-  L2Q (mean joint quat error):   0.183094
-  NPSS:                          0.025463
-  Joint Rotation MAE (deg):      21.127275
-  Joint Rotation RMSE (deg):     27.193397
-  Joint Position MAE:            16.258633
-  Joint Position RMSE:           23.748969
+  L2P (mean joint pos error):    20.437426
+  L2Q (mean joint quat error):   0.192857
+  NPSS:                          0.025798
+  Joint Rotation MAE (deg):      22.269367
+  Joint Rotation RMSE (deg):     29.021126
+  Joint Position MAE:            10.002353
+  Joint Position RMSE:           14.807699
   Root Position MAE:             0.000000
   Root Position RMSE:            0.000000
-  MDC (pred):                    2.253324
+  MDC (pred):                    1.624543
   MDC (gt):                      0.068940
-  MDC (pred-gt %):               8950.6545%
-  MDCSS (pred):                  5.996508
+  MDC (pred-gt %):               5913.1934%
+  MDCSS (pred):                  6.308189
   MDCSS (gt):                    0.400242
-  MDCSS (pred-gt %):             5306.9656%
+  MDCSS (pred-gt %):             5528.2445%
 
 ============================================================
   Case: no_root   Dataset: ALL   (n=2250)
 ============================================================
-  L2P (mean joint pos error):    33.687504
-  L2Q (mean joint quat error):   0.243076
-  NPSS:                          0.022146
-  Joint Rotation MAE (deg):      28.164606
-  Joint Rotation RMSE (deg):     34.658973
-  Joint Position MAE:            16.123945
-  Joint Position RMSE:           23.844168
+  L2P (mean joint pos error):    21.593641
+  L2Q (mean joint quat error):   0.237028
+  NPSS:                          0.021796
+  Joint Rotation MAE (deg):      27.429982
+  Joint Rotation RMSE (deg):     33.777165
+  Joint Position MAE:            10.737560
+  Joint Position RMSE:           15.125746
   Root Position MAE:             0.000000
   Root Position RMSE:            0.000000
-  MDC (pred):                    2.202049
+  MDC (pred):                    1.592581
   MDC (gt):                      0.085341
-  MDC (pred-gt %):               5336.8852%
-  MDCSS (pred):                  6.947265
+  MDC (pred-gt %):               3694.2068%
+  MDCSS (pred):                  6.029865
   MDCSS (gt):                    0.472371
-  MDCSS (pred-gt %):             3345.2111%
+  MDCSS (pred-gt %):             3132.0315%
 

@@ -38,7 +38,7 @@
     "checkpoint_path": "",
     "eval_checkpoint_path": "",
     "train_data_paths": [
-        "./data/train/lafan1_subject1"
+        "./data/train/lafan1_full"
     ],
     "eval_data_paths": [
         "./data/eval/ACAAD",
