@@ -1,0 +1,7 @@
+arm,repeat,seed,config,run_id,checkpoint,study,status,started,finished,minutes
+abl_rot_global_all,0,0,abl_rot_global_all.json,20260802-182625,./checkpoints/model_20260802-182625-best.pth,"1-rotations(all), 2-fk(baseline), 3-skeletons(multi), 4-mdc(baseline)",ok,2026-08-02 18:26:21,2026-08-02 20:28:45,122.4
+abl_rot_local_all,0,0,abl_rot_local_all.json,20260802-202849,./checkpoints/model_20260802-202849-best.pth,1-rotations(all),ok,2026-08-02 20:28:45,2026-08-02 23:13:36,164.8
+abl_rot_global_lafan,0,0,abl_rot_global_lafan.json,20260802-231339,./checkpoints/model_20260802-231339-best.pth,"1-rotations(lafan), 3-skeletons(single)",ok,2026-08-02 23:13:36,2026-08-02 23:41:42,28.1
+abl_rot_local_lafan,0,0,abl_rot_local_lafan.json,20260802-234145,./checkpoints/model_20260802-234145-best.pth,1-rotations(lafan),ok,2026-08-02 23:41:42,2026-08-03 00:16:45,35.0
+abl_fk_off,0,0,abl_fk_off.json,20260803-001648,./checkpoints/model_20260803-001648-best.pth,2-fk(ablated),ok,2026-08-03 00:16:45,2026-08-03 01:29:49,73.1
+abl_mdc_on,0,0,abl_mdc_on.json,20260803-012952,./checkpoints/model_20260803-012952-best.pth,4-mdc(ablated),ok,2026-08-03 01:29:49,2026-08-03 03:48:27,138.6

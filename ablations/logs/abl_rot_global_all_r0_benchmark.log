@@ -1,0 +1,338 @@
+Loading dataset...
+Female1_A01_Stand.bvh (1/21)
+  loaded precomputed global rotation features
+Female1_A03_SwingT2.bvh (2/21)
+  loaded precomputed global rotation features
+Female1_B04_StandToWalkBack.bvh (3/21)
+  loaded precomputed global rotation features
+Female1_B07_WalkBackwardsTurnForwards.bvh (4/21)
+  loaded precomputed global rotation features
+Female1_B22_SideStepLeft.bvh (5/21)
+  loaded precomputed global rotation features
+Female1_D2_Wait.bvh (6/21)
+  loaded precomputed global rotation features
+Male2_B13_WalkTurnRight135.bvh (7/21)
+  loaded precomputed global rotation features
+Male2_B14_WalkTurnRight45.bvh (8/21)
+  loaded precomputed global rotation features
+Male2_B3_Walk.bvh (9/21)
+  loaded precomputed global rotation features
+Male2_C10_RunBackwardsStopRunForward.bvh (10/21)
+  loaded precomputed global rotation features
+Male2_C14_RunTurnRight90.bvh (11/21)
+  loaded precomputed global rotation features
+Male2_C6_StandToRunBackwards.bvh (12/21)
+  loaded precomputed global rotation features
+Male2_D1_StandToReady.bvh (13/21)
+  loaded precomputed global rotation features
+Male2_D3_RunToReady.bvh (14/21)
+  loaded precomputed global rotation features
+Male2_D8_BowToReady.bvh (15/21)
+  loaded precomputed global rotation features
+Male2_E13_BlockRightHigh.bvh (16/21)
+  loaded precomputed global rotation features
+Male2_E13_BodyCrossLeft.bvh (17/21)
+  loaded precomputed global rotation features
+Male2_E1_TurnAroundRight.bvh (18/21)
+  loaded precomputed global rotation features
+Male2_E2_JabRight.bvh (19/21)
+  loaded precomputed global rotation features
+Male2_G20_ReverseSpinCrescentRight.bvh (20/21)
+  loaded precomputed global rotation features
+Male2_G6_AxeKick.bvh (21/21)
+  loaded precomputed global rotation features
+aiming2_subject5.bvh (1/12)
+  loaded precomputed global rotation features
+dance2_subject5.bvh (2/12)
+  loaded precomputed global rotation features
+fight1_subject3.bvh (3/12)
+  loaded precomputed global rotation features
+fightAndSports1_subject4.bvh (4/12)
+  loaded precomputed global rotation features
+ground1_subject5.bvh (5/12)
+  loaded precomputed global rotation features
+jumps1_subject2.bvh (6/12)
+  loaded precomputed global rotation features
+multipleActions1_subject3.bvh (7/12)
+  loaded precomputed global rotation features
+obstacles5_subject2.bvh (8/12)
+  loaded precomputed global rotation features
+pushAndStumble1_subject5.bvh (9/12)
+  loaded precomputed global rotation features
+run2_subject4.bvh (10/12)
+  loaded precomputed global rotation features
+walk1_subject2.bvh (11/12)
+  loaded precomputed global rotation features
+walk3_subject3.bvh (12/12)
+  loaded precomputed global rotation features
+LocomotionFlat07_000.bvh (1/2)
+  loaded precomputed global rotation features
+LocomotionFlat11_000.bvh (2/2)
+  loaded precomputed global rotation features
+  3 bad transition(s) detected, affected windows will be skipped
+  Skipped 13 window(s) containing jumps
+0005_Jogging001.bvh (1/4)
+  loaded precomputed global rotation features
+  2 bad transition(s) detected, affected windows will be skipped
+  Skipped 9 window(s) containing jumps
+0008_Walking002.bvh (2/4)
+  loaded precomputed global rotation features
+0015_HopOverObstacle001.bvh (3/4)
+  loaded precomputed global rotation features
+0018_XinJiang002.bvh (4/4)
+  loaded precomputed global rotation features
+S1_acting1_BlenderZXY_YmZ.bvh (1/5)
+  loaded precomputed global rotation features
+S2_walking2_BlenderZXY_YmZ.bvh (2/5)
+  loaded precomputed global rotation features
+S3_rom3_BlenderZXY_YmZ.bvh (3/5)
+  loaded precomputed global rotation features
+S3_walking3_BlenderZXY_YmZ.bvh (4/5)
+  loaded precomputed global rotation features
+S4_freestyle1_BlenderZXY_YmZ.bvh (5/5)
+  loaded precomputed global rotation features
+  1 bad transition(s) detected, affected windows will be skipped
+  Skipped 7 window(s) containing jumps
+Dataset ready: 2250 samples, 5 unique skeletons
+Checkpoint: ./checkpoints/model_20260802-182625-best.pth
+Test samples: 2250
+Context: 50, Gen frames: 15
+  Processed 500/2250 samples...
+  Processed 1000/2250 samples...
+  Processed 1500/2250 samples...
+  Processed 2000/2250 samples...
+  Processed 2250/2250 samples...
+
+Skipped 0 samples (not enough frames).
+Evaluated 2250 samples.
+Facing normalization: True
+Rotations: global   Skeleton geometry: True
+
+============================================================
+  Case: with_root   Dataset: ACAAD   (n=296)
+============================================================
+  L2P (mean joint pos error):    5.897681
+  L2Q (mean joint quat error):   0.083552
+  NPSS:                          0.013644
+  Joint Rotation MAE (deg):      9.595200
+  Joint Rotation RMSE (deg):     12.281189
+  Joint Position MAE:            2.887916
+  Joint Position RMSE:           4.364828
+  Root Position MAE:             2.040241
+  Root Position RMSE:            2.737811
+  MDC (pred):                    0.162493
+  MDC (gt):                      0.120711
+  MDC (pred-gt %):               40.4155%
+  MDCSS (pred):                  0.802636
+  MDCSS (gt):                    0.435991
+  MDCSS (pred-gt %):             112.2354%
+
+============================================================
+  Case: with_root   Dataset: lafan1_reduced   (n=228)
+============================================================
+  L2P (mean joint pos error):    12.507452
+  L2Q (mean joint quat error):   0.154532
+  NPSS:                          0.017712
+  Joint Rotation MAE (deg):      17.776770
+  Joint Rotation RMSE (deg):     21.833397
+  Joint Position MAE:            6.122280
+  Joint Position RMSE:           9.160534
+  Root Position MAE:             4.539020
+  Root Position RMSE:            6.311476
+  MDC (pred):                    0.130796
+  MDC (gt):                      0.091962
+  MDC (pred-gt %):               88.0189%
+  MDCSS (pred):                  1.008327
+  MDCSS (gt):                    0.572651
+  MDCSS (pred-gt %):             158.2918%
+
+============================================================
+  Case: with_root   Dataset: pfnn   (n=723)
+============================================================
+  L2P (mean joint pos error):    10.193157
+  L2Q (mean joint quat error):   0.153626
+  NPSS:                          0.013014
+  Joint Rotation MAE (deg):      17.652443
+  Joint Rotation RMSE (deg):     20.710329
+  Joint Position MAE:            5.013519
+  Joint Position RMSE:           7.159499
+  Root Position MAE:             3.677009
+  Root Position RMSE:            5.066427
+  MDC (pred):                    0.181032
+  MDC (gt):                      0.091641
+  MDC (pred-gt %):               184.3560%
+  MDCSS (pred):                  1.506191
+  MDCSS (gt):                    0.558422
+  MDCSS (pred-gt %):             333.6769%
+
+============================================================
+  Case: with_root   Dataset: SFU   (n=142)
+============================================================
+  L2P (mean joint pos error):    6.886791
+  L2Q (mean joint quat error):   0.142383
+  NPSS:                          0.022976
+  Joint Rotation MAE (deg):      16.377393
+  Joint Rotation RMSE (deg):     20.321774
+  Joint Position MAE:            3.357781
+  Joint Position RMSE:           5.056908
+  Root Position MAE:             2.196600
+  Root Position RMSE:            2.981149
+  MDC (pred):                    0.124873
+  MDC (gt):                      0.068449
+  MDC (pred-gt %):               97.8843%
+  MDCSS (pred):                  0.832176
+  MDCSS (gt):                    0.386479
+  MDCSS (pred-gt %):             143.8221%
+
+============================================================
+  Case: with_root   Dataset: TotalCapture   (n=861)
+============================================================
+  L2P (mean joint pos error):    5.263092
+  L2Q (mean joint quat error):   0.089549
+  NPSS:                          0.021424
+  Joint Rotation MAE (deg):      10.286525
+  Joint Rotation RMSE (deg):     13.795261
+  Joint Position MAE:            2.556075
+  Joint Position RMSE:           3.937949
+  Root Position MAE:             1.795896
+  Root Position RMSE:            2.485807
+  MDC (pred):                    0.111789
+  MDC (gt):                      0.068950
+  MDC (pred-gt %):               199.6934%
+  MDCSS (pred):                  0.684385
+  MDCSS (gt):                    0.400258
+  MDCSS (pred-gt %):             297.6411%
+
+============================================================
+  Case: with_root   Dataset: ALL   (n=2250)
+============================================================
+  L2P (mean joint pos error):    7.767339
+  L2Q (mean joint quat error):   0.119269
+  NPSS:                          0.017420
+  Joint Rotation MAE (deg):      13.705905
+  Joint Rotation RMSE (deg):     17.044545
+  Joint Position MAE:            3.801361
+  Joint Position RMSE:           5.629139
+  Root Position MAE:             2.735764
+  Root Position RMSE:            3.767128
+  MDC (pred):                    0.143461
+  MDC (gt):                      0.085351
+  MDC (pred-gt %):               156.0695%
+  MDCSS (pred):                  1.006169
+  MDCSS (gt):                    0.472382
+  MDCSS (pred-gt %):             261.0010%
+
+============================================================
+  Case: no_root   Dataset: ACAAD   (n=296)
+============================================================
+  L2P (mean joint pos error):    5.710250
+  L2Q (mean joint quat error):   0.083552
+  NPSS:                          0.013644
+  Joint Rotation MAE (deg):      9.595200
+  Joint Rotation RMSE (deg):     12.281189
+  Joint Position MAE:            2.795178
+  Joint Position RMSE:           4.320167
+  Root Position MAE:             0.000000
+  Root Position RMSE:            0.000000
+  MDC (pred):                    0.162476
+  MDC (gt):                      0.120698
+  MDC (pred-gt %):               40.4158%
+  MDCSS (pred):                  0.802690
+  MDCSS (gt):                    0.436027
+  MDCSS (pred-gt %):             112.2285%
+
+============================================================
+  Case: no_root   Dataset: lafan1_reduced   (n=228)
+============================================================
+  L2P (mean joint pos error):    12.083170
+  L2Q (mean joint quat error):   0.154532
+  NPSS:                          0.017712
+  Joint Rotation MAE (deg):      17.776770
+  Joint Rotation RMSE (deg):     21.833397
+  Joint Position MAE:            5.915961
+  Joint Position RMSE:           9.051181
+  Root Position MAE:             0.000000
+  Root Position RMSE:            0.000000
+  MDC (pred):                    0.130759
+  MDC (gt):                      0.091918
+  MDC (pred-gt %):               88.0289%
+  MDCSS (pred):                  1.008256
+  MDCSS (gt):                    0.572553
+  MDCSS (pred-gt %):             158.2974%
+
+============================================================
+  Case: no_root   Dataset: pfnn   (n=723)
+============================================================
+  L2P (mean joint pos error):    9.891013
+  L2Q (mean joint quat error):   0.153626
+  NPSS:                          0.013014
+  Joint Rotation MAE (deg):      17.652443
+  Joint Rotation RMSE (deg):     20.710329
+  Joint Position MAE:            4.866439
+  Joint Position RMSE:           7.081506
+  Root Position MAE:             0.000000
+  Root Position RMSE:            0.000000
+  MDC (pred):                    0.181032
+  MDC (gt):                      0.091641
+  MDC (pred-gt %):               184.3560%
+  MDCSS (pred):                  1.506191
+  MDCSS (gt):                    0.558422
+  MDCSS (pred-gt %):             333.6769%
+
+============================================================
+  Case: no_root   Dataset: SFU   (n=142)
+============================================================
+  L2P (mean joint pos error):    6.671600
+  L2Q (mean joint quat error):   0.142383
+  NPSS:                          0.022976
+  Joint Rotation MAE (deg):      16.377393
+  Joint Rotation RMSE (deg):     20.321774
+  Joint Position MAE:            3.253181
+  Joint Position RMSE:           5.009629
+  Root Position MAE:             0.000000
+  Root Position RMSE:            0.000000
+  MDC (pred):                    0.124872
+  MDC (gt):                      0.068449
+  MDC (pred-gt %):               97.8848%
+  MDCSS (pred):                  0.832176
+  MDCSS (gt):                    0.386480
+  MDCSS (pred-gt %):             143.8215%
+
+============================================================
+  Case: no_root   Dataset: TotalCapture   (n=861)
+============================================================
+  L2P (mean joint pos error):    5.101690
+  L2Q (mean joint quat error):   0.089549
+  NPSS:                          0.021424
+  Joint Rotation MAE (deg):      10.286525
+  Joint Rotation RMSE (deg):     13.795261
+  Joint Position MAE:            2.477992
+  Joint Position RMSE:           3.898661
+  Root Position MAE:             0.000000
+  Root Position RMSE:            0.000000
+  MDC (pred):                    0.111776
+  MDC (gt):                      0.068940
+  MDC (pred-gt %):               199.8551%
+  MDCSS (pred):                  0.684377
+  MDCSS (gt):                    0.400242
+  MDCSS (pred-gt %):             297.8562%
+
+============================================================
+  Case: no_root   Dataset: ALL   (n=2250)
+============================================================
+  L2P (mean joint pos error):    7.527254
+  L2Q (mean joint quat error):   0.119269
+  NPSS:                          0.017420
+  Joint Rotation MAE (deg):      13.705905
+  Joint Rotation RMSE (deg):     17.044545
+  Joint Position MAE:            3.684511
+  Joint Position RMSE:           5.569103
+  Root Position MAE:             0.000000
+  Root Position RMSE:            0.000000
+  MDC (pred):                    0.143450
+  MDC (gt):                      0.085341
+  MDC (pred-gt %):               156.1324%
+  MDCSS (pred):                  1.006166
+  MDCSS (gt):                    0.472371
+  MDCSS (pred-gt %):             261.0830%
+
