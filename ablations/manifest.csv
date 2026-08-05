@@ -4,3 +4,13 @@ abl_rot_local_all,0,0,abl_rot_local_all.json,20260802-202849,./checkpoints/model
 abl_fk_off,0,0,abl_fk_off.json,20260803-001648,./checkpoints/model_20260803-001648-best.pth,2-fk(ablated),ok,2026-08-03 00:16:45,2026-08-03 01:29:49,73.1
 abl_mdc_on,0,0,abl_mdc_on.json,20260803-012952,./checkpoints/model_20260803-012952-best.pth,4-mdc(ablated),ok,2026-08-03 01:29:49,2026-08-03 03:48:27,138.6
 abl_rot_global_lafan,0,0,abl_rot_global_lafan.json,20260803-201446,./checkpoints/model_20260803-201446-best.pth,"1-rotations(lafan), 3-skeletons(single)",ok,2026-08-03 20:14:32,2026-08-03 21:46:51,92.3
+abl_rot_local_lafan,0,0,abl_rot_local_lafan.json,20260804-074133,./checkpoints/model_20260804-074133-best.pth,1-rotations(lafan),ok,2026-08-04 07:41:20,2026-08-04 11:17:29,216.1
+abl_rot_global_all,1,1,abl_rot_global_all.json,20260804-111732,./checkpoints/model_20260804-111732-best.pth,"1-rotations(all), 2-fk(baseline), 3-skeletons(multi), 4-mdc(baseline)",ok,2026-08-04 11:17:29,2026-08-04 13:01:05,103.6
+abl_rot_local_all,1,1,abl_rot_local_all.json,20260804-130109,./checkpoints/model_20260804-130109-best.pth,1-rotations(all),ok,2026-08-04 13:01:05,2026-08-04 15:55:00,173.9
+abl_rot_global_lafan,1,1,abl_rot_global_lafan.json,20260804-155503,./checkpoints/model_20260804-155503-best.pth,"1-rotations(lafan), 3-skeletons(single)",ok,2026-08-04 15:55:00,2026-08-04 17:52:06,117.1
+abl_rot_local_lafan,1,1,abl_rot_local_lafan.json,20260804-175213,./checkpoints/model_20260804-175213-best.pth,1-rotations(lafan),ok,2026-08-04 17:52:06,2026-08-04 21:04:12,192.1
+abl_fk_off,1,1,abl_fk_off.json,20260804-210415,./checkpoints/model_20260804-210415-best.pth,2-fk(ablated),ok,2026-08-04 21:04:12,2026-08-04 22:07:58,63.8
+abl_mdc_on,1,1,abl_mdc_on.json,20260805-074440,./checkpoints/model_20260805-074440-best.pth,4-mdc(ablated),ok,2026-08-05 07:44:30,2026-08-05 10:04:19,139.8
+abl_rot_global_all,2,2,abl_rot_global_all.json,20260805-100422,./checkpoints/model_20260805-100422-best.pth,"1-rotations(all), 2-fk(baseline), 3-skeletons(multi), 4-mdc(baseline)",ok,2026-08-05 10:04:19,2026-08-05 11:57:04,112.8
+abl_rot_local_all,2,2,abl_rot_local_all.json,20260805-115707,./checkpoints/model_20260805-115707-best.pth,1-rotations(all),ok,2026-08-05 11:57:04,2026-08-05 14:58:51,181.8
+abl_rot_global_lafan,2,2,abl_rot_global_lafan.json,20260805-145854,./checkpoints/model_20260805-145854-best.pth,"1-rotations(lafan), 3-skeletons(single)",ok,2026-08-05 14:58:51,2026-08-05 17:04:17,125.4

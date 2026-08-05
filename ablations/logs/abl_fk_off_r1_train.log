@@ -1,0 +1,722 @@
+Loading dataset...
+Female1_A02_Sway.bvh (1/183)
+  loaded precomputed global rotation features
+Female1_A02_SwayT2.bvh (2/183)
+  loaded precomputed global rotation features
+Female1_A03_Swing.bvh (3/183)
+  loaded precomputed global rotation features
+Female1_A04_Look.bvh (4/183)
+  loaded precomputed global rotation features
+Female1_A05_PickUpBox.bvh (5/183)
+  loaded precomputed global rotation features
+Female1_A06_LiftBox.bvh (6/183)
+  loaded precomputed global rotation features
+Female1_A06_LiftBoxT2.bvh (7/183)
+  loaded precomputed global rotation features
+Female1_A07_Crouch.bvh (8/183)
+  loaded precomputed global rotation features
+Female1_A11_CrawlForward.bvh (9/183)
+  loaded precomputed global rotation features
+Female1_A12_CrawlBackwards.bvh (10/183)
+  loaded precomputed global rotation features
+Female1_A15_SkipToStand.bvh (11/183)
+  loaded precomputed global rotation features
+Female1_B01_StandToWalk.bvh (12/183)
+  loaded precomputed global rotation features
+Female1_B02_WalkToStand.bvh (13/183)
+  loaded precomputed global rotation features
+  1 bad transition(s) detected, affected windows will be skipped
+  Skipped 8 window(s) containing jumps
+Female1_B02_WalkToStandT2.bvh (14/183)
+  loaded precomputed global rotation features
+Female1_B03_Walk1.bvh (15/183)
+  loaded precomputed global rotation features
+Female1_B05_WalkBackwards.bvh (16/183)
+  Skipping Female1_B05_WalkBackwards.bvh (too short, 47 < 65)
+Female1_B06_WalkBackwardsToStand.bvh (17/183)
+  loaded precomputed global rotation features
+Female1_B08_WalkBackwardsStopForwards.bvh (18/183)
+  loaded precomputed global rotation features
+Female1_B09_WalkTurnLeft90.bvh (19/183)
+  loaded precomputed global rotation features
+Female1_B10_WalkTurnLeft45.bvh (20/183)
+  loaded precomputed global rotation features
+Female1_B11_WalkTurnLeft135.bvh (21/183)
+  loaded precomputed global rotation features
+Female1_B12_WalkTurnRight90.bvh (22/183)
+  loaded precomputed global rotation features
+Female1_B13_WalkTurnRight45.bvh (23/183)
+  loaded precomputed global rotation features
+Female1_B14_WalkTurnRight135.bvh (24/183)
+  loaded precomputed global rotation features
+Female1_B15_WalkTurnAround180.bvh (25/183)
+  loaded precomputed global rotation features
+  1 bad transition(s) detected, affected windows will be skipped
+  Skipped 1 window(s) containing jumps
+Female1_B16_WalkTurnChangeDirection.bvh (26/183)
+  loaded precomputed global rotation features
+Female1_B20_WalkWithBox.bvh (27/183)
+  loaded precomputed global rotation features
+Female1_B21_S2_PutDownBoxToWalk.bvh (28/183)
+  loaded precomputed global rotation features
+Female1_B21_S3_PutDownBoxToWalk.bvh (29/183)
+  loaded precomputed global rotation features
+Female1_B24_WalkToCrouch.bvh (30/183)
+  loaded precomputed global rotation features
+Female1_B25_CrouchToWalk.bvh (31/183)
+  loaded precomputed global rotation features
+Female1_B26_WalkToSkip.bvh (32/183)
+  loaded precomputed global rotation features
+Female1_B27_SkipToWalk1.bvh (33/183)
+  loaded precomputed global rotation features
+Female1_C02_RunToStand.bvh (34/183)
+  loaded precomputed global rotation features
+Female1_C03_Run.bvh (35/183)
+  Skipping Female1_C03_Run.bvh (too short, 35 < 65)
+Female1_C04_RunToWalk1.bvh (36/183)
+  loaded precomputed global rotation features
+Female1_C05_WalkToRun.bvh (37/183)
+  loaded precomputed global rotation features
+Female1_C06_StandToRunBackwards.bvh (38/183)
+  loaded precomputed global rotation features
+Female1_C07_RunBackwards.bvh (39/183)
+  loaded precomputed global rotation features
+Female1_C08_RunBackwardsToStand.bvh (40/183)
+  loaded precomputed global rotation features
+Female1_C09_RunBackwardsTurnRunForward.bvh (41/183)
+  Skipping Female1_C09_RunBackwardsTurnRunForward.bvh (too short, 59 < 65)
+Female1_C10_RunBackwardsStopRunForward.bvh (42/183)
+  loaded precomputed global rotation features
+Female1_C11_RunTurnLeft90.bvh (43/183)
+  Skipping Female1_C11_RunTurnLeft90.bvh (too short, 63 < 65)
+Female1_C12_RunTurnLeft45.bvh (44/183)
+  loaded precomputed global rotation features
+Female1_C13_RunTurnLeft135.bvh (45/183)
+  loaded precomputed global rotation features
+Female1_C14_RunTurnRight90.bvh (46/183)
+  loaded precomputed global rotation features
+Female1_C15_RunTurnRight45.bvh (47/183)
+  Skipping Female1_C15_RunTurnRight45.bvh (too short, 63 < 65)
+Female1_C16_RunTurnRight135.bvh (48/183)
+  loaded precomputed global rotation features
+Female1_C17_RunTurnAround.bvh (49/183)
+  loaded precomputed global rotation features
+  1 bad transition(s) detected, affected windows will be skipped
+  Skipped 5 window(s) containing jumps
+Female1_C18_RunChangeDirection.bvh (50/183)
+  loaded precomputed global rotation features
+Female1_C21_S2_RunToPickUpBox.bvh (51/183)
+  Skipping Female1_C21_S2_RunToPickUpBox.bvh (too short, 63 < 65)
+Female1_C22_RunWithBox.bvh (52/183)
+  Skipping Female1_C22_RunWithBox.bvh (too short, 51 < 65)
+Female1_C23_PutDownBoxToRun.bvh (53/183)
+  loaded precomputed global rotation features
+Female1_C24_SideStepLeft.bvh (54/183)
+  loaded precomputed global rotation features
+Female1_C25_SideStepRight.bvh (55/183)
+  loaded precomputed global rotation features
+Female1_C26_RunToCrouch.bvh (56/183)
+  loaded precomputed global rotation features
+Female1_C27_CrouchToRun1.bvh (57/183)
+  loaded precomputed global rotation features
+Female1_D1_Urban.bvh (58/183)
+  loaded precomputed global rotation features
+Female1_D3_ConversationGestures.bvh (59/183)
+  loaded precomputed global rotation features
+Female1_D5_RandomStuff2.bvh (60/183)
+  loaded precomputed global rotation features
+Male2_A13_Skip.bvh (61/183)
+  loaded precomputed global rotation features
+Male2_A14_StandToSkip.bvh (62/183)
+  loaded precomputed global rotation features
+Male2_A15_SkipToStand.bvh (63/183)
+  loaded precomputed global rotation features
+Male2_A1_Stand.bvh (64/183)
+  loaded precomputed global rotation features
+Male2_A2_Sway.bvh (65/183)
+  loaded precomputed global rotation features
+Male2_A3_SwingArms.bvh (66/183)
+  loaded precomputed global rotation features
+Male2_A4_LookAround.bvh (67/183)
+  loaded precomputed global rotation features
+Male2_A5_PickUpBox.bvh (68/183)
+  loaded precomputed global rotation features
+Male2_A6_BoxLift.bvh (69/183)
+  loaded precomputed global rotation features
+Male2_B10_WalkTurnLeft45.bvh (70/183)
+  loaded precomputed global rotation features
+Male2_B11_WalkTurnLeft135.bvh (71/183)
+  loaded precomputed global rotation features
+Male2_B12_WalkTurnRight90.bvh (72/183)
+  loaded precomputed global rotation features
+Male2_B15_WalkTurnAround.bvh (73/183)
+  loaded precomputed global rotation features
+Male2_B17_WalkToHopToWalk.bvh (74/183)
+  loaded precomputed global rotation features
+Male2_B18_WalkToLeapToWalk.bvh (75/183)
+  loaded precomputed global rotation features
+Male2_B19_WalkToPickUpBox.bvh (76/183)
+  loaded precomputed global rotation features
+Male2_B1_StandToWalk.bvh (77/183)
+  loaded precomputed global rotation features
+Male2_B20_WalkWithBox.bvh (78/183)
+  loaded precomputed global rotation features
+Male2_B21_PutDownBoxToWalk.bvh (79/183)
+  loaded precomputed global rotation features
+Male2_B22_SideStepLeft.bvh (80/183)
+  loaded precomputed global rotation features
+Male2_B23_SideStepRight.bvh (81/183)
+  loaded precomputed global rotation features
+Male2_B25_CrouchToWalk.bvh (82/183)
+  loaded precomputed global rotation features
+Male2_B26_WalkToSkip.bvh (83/183)
+  loaded precomputed global rotation features
+Male2_B27_SkipToWalk.bvh (84/183)
+  loaded precomputed global rotation features
+Male2_B2_WalkToStand.bvh (85/183)
+  loaded precomputed global rotation features
+Male2_B4_StandToWalkBackwards.bvh (86/183)
+  loaded precomputed global rotation features
+Male2_B5_WalkBackwards.bvh (87/183)
+  loaded precomputed global rotation features
+Male2_B6_WalkBackwardsToStand.bvh (88/183)
+  loaded precomputed global rotation features
+Male2_B7_WalkBackwardsTurnForward.bvh (89/183)
+  loaded precomputed global rotation features
+Male2_B8_WalkBackwardsStopForward.bvh (90/183)
+  loaded precomputed global rotation features
+Male2_B9_WalkTurnLeft90.bvh (91/183)
+  loaded precomputed global rotation features
+Male2_C11_RunTurnLeft90.bvh (92/183)
+  Skipping Male2_C11_RunTurnLeft90.bvh (too short, 63 < 65)
+Male2_C12_RunTurnLeft45.bvh (93/183)
+  Skipping Male2_C12_RunTurnLeft45.bvh (too short, 52 < 65)
+Male2_C13_RunTurnLeft135.bvh (94/183)
+  loaded precomputed global rotation features
+Male2_C15_RunTurnRight45.bvh (95/183)
+  loaded precomputed global rotation features
+Male2_C16_RunTurnAround.bvh (96/183)
+  loaded precomputed global rotation features
+Male2_C16_RunTurnRight135.bvh (97/183)
+  loaded precomputed global rotation features
+Male2_C17_RunChangeDirection.bvh (98/183)
+  loaded precomputed global rotation features
+Male2_C18_RunToHopToWalk.bvh (99/183)
+  loaded precomputed global rotation features
+Male2_C1_StandToRun.bvh (100/183)
+  loaded precomputed global rotation features
+Male2_C22_RunWithBox.bvh (101/183)
+  Skipping Male2_C22_RunWithBox.bvh (too short, 25 < 65)
+Male2_C23_PutDownBoxToRun.bvh (102/183)
+  loaded precomputed global rotation features
+Male2_C24_QuickSidestepLeft.bvh (103/183)
+  Skipping Male2_C24_QuickSidestepLeft.bvh (too short, 60 < 65)
+Male2_C25_QuickSidestepRight.bvh (104/183)
+  Skipping Male2_C25_QuickSidestepRight.bvh (too short, 60 < 65)
+Male2_C26_RunToCrouch.bvh (105/183)
+  Skipping Male2_C26_RunToCrouch.bvh (too short, 59 < 65)
+Male2_C27_CrouchToRun.bvh (106/183)
+  Skipping Male2_C27_CrouchToRun.bvh (too short, 59 < 65)
+Male2_C2_RunToStand.bvh (107/183)
+  loaded precomputed global rotation features
+Male2_C3_Run.bvh (108/183)
+  Skipping Male2_C3_Run.bvh (too short, 57 < 65)
+Male2_C4_RunToWalk.bvh (109/183)
+  loaded precomputed global rotation features
+Male2_C5_WalkToRun.bvh (110/183)
+  loaded precomputed global rotation features
+Male2_C7_RunBackwards.bvh (111/183)
+  loaded precomputed global rotation features
+Male2_C8_RunBackwardsToStand.bvh (112/183)
+  loaded precomputed global rotation features
+Male2_C9_RunBackwardsTurnRunForward.bvh (113/183)
+  loaded precomputed global rotation features
+Male2_D10_Victory2.bvh (114/183)
+  loaded precomputed global rotation features
+Male2_D11_ReadyToTaunt1ToReady.bvh (115/183)
+  loaded precomputed global rotation features
+Male2_D12_ReadyToTaunt1ToReady.bvh (116/183)
+  loaded precomputed global rotation features
+Male2_D13_CrouchToReady.bvh (117/183)
+  loaded precomputed global rotation features
+Male2_D14_ReadyToCrouch.bvh (118/183)
+  loaded precomputed global rotation features
+Male2_D15_SwitchStance.bvh (119/183)
+  loaded precomputed global rotation features
+Male2_D16_SwitchStanceMore.bvh (120/183)
+  loaded precomputed global rotation features
+Male2_D2_WalkToReady.bvh (121/183)
+  loaded precomputed global rotation features
+Male2_D4_ReadyToRelax.bvh (122/183)
+  loaded precomputed global rotation features
+Male2_D5_ReadyToWalkAway.bvh (123/183)
+  loaded precomputed global rotation features
+Male2_D6_ReadyToRun.bvh (124/183)
+  loaded precomputed global rotation features
+Male2_D7_WalkToBow.bvh (125/183)
+  loaded precomputed global rotation features
+Male2_D9_Victory1.bvh (126/183)
+  loaded precomputed global rotation features
+Male2_D9_WarmUpToReadyToWarmUp.bvh (127/183)
+  loaded precomputed global rotation features
+Male2_E10_BodyHookRight.bvh (128/183)
+  loaded precomputed global rotation features
+Male2_E10_SideStepRight.bvh (129/183)
+  Skipping Male2_E10_SideStepRight.bvh (too short, 58 < 65)
+Male2_E11_BackfistLeft.bvh (130/183)
+  loaded precomputed global rotation features
+Male2_E11_BlockLeftHigh.bvh (131/183)
+  loaded precomputed global rotation features
+Male2_E12_BackfistRight.bvh (132/183)
+  loaded precomputed global rotation features
+Male2_E12_BlockLeftLow.bvh (133/183)
+  loaded precomputed global rotation features
+Male2_E14_BlockRightLow.bvh (134/183)
+  loaded precomputed global rotation features
+Male2_E14_BodyCrossRight.bvh (135/183)
+  loaded precomputed global rotation features
+Male2_E15_BlockLeftMiddle.bvh (136/183)
+  loaded precomputed global rotation features
+Male2_E15_BodyJabRight.bvh (137/183)
+  Skipping Male2_E15_BodyJabRight.bvh (too short, 51 < 65)
+Male2_E16_BlockRightMiddle.bvh (138/183)
+  loaded precomputed global rotation features
+Male2_E16_BodyJabLeft.bvh (139/183)
+  loaded precomputed global rotation features
+Male2_E17_BlockMiddleHigh.bvh (140/183)
+  loaded precomputed global rotation features
+Male2_E18_BlockMiddleLow.bvh (141/183)
+  loaded precomputed global rotation features
+Male2_E19_DodgeLeft.bvh (142/183)
+  loaded precomputed global rotation features
+Male2_E1_JabLeft.bvh (143/183)
+  loaded precomputed global rotation features
+Male2_E20_DodgeRight.bvh (144/183)
+  loaded precomputed global rotation features
+Male2_E21_DuckLeft.bvh (145/183)
+  loaded precomputed global rotation features
+Male2_E22_DuckRight.bvh (146/183)
+  loaded precomputed global rotation features
+Male2_E2_TurnAroundLeft.bvh (147/183)
+  loaded precomputed global rotation features
+Male2_E3_Advance.bvh (148/183)
+  loaded precomputed global rotation features
+Male2_E3_CrossLeft.bvh (149/183)
+  loaded precomputed global rotation features
+Male2_E4_CrossRight.bvh (150/183)
+  loaded precomputed global rotation features
+Male2_E4_QuickAdvance.bvh (151/183)
+  loaded precomputed global rotation features
+Male2_E5_HookLeft.bvh (152/183)
+  loaded precomputed global rotation features
+Male2_E5_Retreat.bvh (153/183)
+  loaded precomputed global rotation features
+Male2_E6_HookRight.bvh (154/183)
+  loaded precomputed global rotation features
+Male2_E6_QuickRetreat.bvh (155/183)
+  loaded precomputed global rotation features
+Male2_E7_SuperFastAdvance.bvh (156/183)
+  loaded precomputed global rotation features
+Male2_E7_UppercutLeft.bvh (157/183)
+  loaded precomputed global rotation features
+Male2_E8_Bounce.bvh (158/183)
+  loaded precomputed global rotation features
+Male2_E8_UppercutRight.bvh (159/183)
+  loaded precomputed global rotation features
+Male2_E9_BodyHookLeft.bvh (160/183)
+  loaded precomputed global rotation features
+Male2_E9_SideStepLeft.bvh (161/183)
+  loaded precomputed global rotation features
+Male2_Extended_1.bvh (162/183)
+  loaded precomputed global rotation features
+Male2_Extended_2.bvh (163/183)
+  loaded precomputed global rotation features
+Male2_Extended_3.bvh (164/183)
+  loaded precomputed global rotation features
+  1 bad transition(s) detected, affected windows will be skipped
+  Skipped 64 window(s) containing jumps
+Male2_Form_1.bvh (165/183)
+  loaded precomputed global rotation features
+Male2_G10_RoundhouseLeadingLeft.bvh (166/183)
+  loaded precomputed global rotation features
+Male2_G11_RoundhouseLeadingRight.bvh (167/183)
+  loaded precomputed global rotation features
+Male2_G12_CrescentLeft.bvh (168/183)
+  loaded precomputed global rotation features
+Male2_G13_CrescentRight.bvh (169/183)
+  loaded precomputed global rotation features
+Male2_G14_RoundhouseBodyLeft.bvh (170/183)
+  loaded precomputed global rotation features
+Male2_G15_RoundhouseBodyRight.bvh (171/183)
+  loaded precomputed global rotation features
+Male2_G16_DoubleKick.bvh (172/183)
+  loaded precomputed global rotation features
+Male2_G17_PushKickLeft.bvh (173/183)
+  loaded precomputed global rotation features
+Male2_G18_PushKickRight.bvh (174/183)
+  loaded precomputed global rotation features
+Male2_G19_ReverseSpinCrescentLeft.bvh (175/183)
+  loaded precomputed global rotation features
+Male2_G1_SidekickLeadingLeft.bvh (176/183)
+  loaded precomputed global rotation features
+Male2_G2_FrontKick.bvh (177/183)
+  loaded precomputed global rotation features
+Male2_G3_SidekickLeadingRight.bvh (178/183)
+  Skipping Male2_G3_SidekickLeadingRight.bvh (too short, 59 < 65)
+Male2_G4_SpinningBackKick.bvh (179/183)
+  loaded precomputed global rotation features
+Male2_G5_BackKick.bvh (180/183)
+  loaded precomputed global rotation features
+Male2_G8_RoundhouseLeft.bvh (181/183)
+  loaded precomputed global rotation features
+Male2_G9_RoundhouseRight.bvh (182/183)
+  Skipping Male2_G9_RoundhouseRight.bvh (too short, 54 < 65)
+Male2_G9_RoundhouseRightT2.bvh (183/183)
+  loaded precomputed global rotation features
+aiming1_subject1.bvh (1/11)
+  loaded precomputed global rotation features
+dance1_subject1.bvh (2/11)
+  loaded precomputed global rotation features
+fallAndGetUp1_subject1.bvh (3/11)
+  loaded precomputed global rotation features
+fightAndSports1_subject1.bvh (4/11)
+  loaded precomputed global rotation features
+ground1_subject1.bvh (5/11)
+  loaded precomputed global rotation features
+jumps1_subject1.bvh (6/11)
+  loaded precomputed global rotation features
+multipleActions1_subject1.bvh (7/11)
+  loaded precomputed global rotation features
+obstacles1_subject1.bvh (8/11)
+  loaded precomputed global rotation features
+run2_subject1.bvh (9/11)
+  loaded precomputed global rotation features
+walk1_subject1.bvh (10/11)
+  loaded precomputed global rotation features
+walk4_subject1.bvh (11/11)
+  loaded precomputed global rotation features
+LocomotionFlat01_000.bvh (1/12)
+  loaded precomputed global rotation features
+LocomotionFlat02_000.bvh (2/12)
+  loaded precomputed global rotation features
+LocomotionFlat02_001.bvh (3/12)
+  loaded precomputed global rotation features
+LocomotionFlat03_000.bvh (4/12)
+  loaded precomputed global rotation features
+  2 bad transition(s) detected, affected windows will be skipped
+  Skipped 128 window(s) containing jumps
+LocomotionFlat04_000.bvh (5/12)
+  loaded precomputed global rotation features
+LocomotionFlat05_000.bvh (6/12)
+  loaded precomputed global rotation features
+LocomotionFlat06_000.bvh (7/12)
+  loaded precomputed global rotation features
+  1 bad transition(s) detected, affected windows will be skipped
+  Skipped 64 window(s) containing jumps
+LocomotionFlat06_001.bvh (8/12)
+  loaded precomputed global rotation features
+LocomotionFlat08_000.bvh (9/12)
+  loaded precomputed global rotation features
+LocomotionFlat09_000.bvh (10/12)
+  loaded precomputed global rotation features
+LocomotionFlat10_000.bvh (11/12)
+  loaded precomputed global rotation features
+LocomotionFlat12_000.bvh (12/12)
+  loaded precomputed global rotation features
+  10 bad transition(s) detected, affected windows will be skipped
+  Skipped 393 window(s) containing jumps
+0005_2FeetJump001.bvh (1/27)
+  loaded precomputed global rotation features
+0005_BackwardsWalk001.bvh (2/27)
+  loaded precomputed global rotation features
+0005_JumpRope001.bvh (3/27)
+  loaded precomputed global rotation features
+0005_SideSkip001.bvh (4/27)
+  loaded precomputed global rotation features
+0005_SlowTrot001.bvh (5/27)
+  loaded precomputed global rotation features
+0005_Stomping001.bvh (6/27)
+  loaded precomputed global rotation features
+0005_Walking001.bvh (7/27)
+  loaded precomputed global rotation features
+0007_Balance001.bvh (8/27)
+  loaded precomputed global rotation features
+0007_Crawling001.bvh (9/27)
+  loaded precomputed global rotation features
+0007_Walking001.bvh (10/27)
+  loaded precomputed global rotation features
+0008_ChaCha001.bvh (11/27)
+  loaded precomputed global rotation features
+0008_Skipping001.bvh (12/27)
+  loaded precomputed global rotation features
+0008_Walking001.bvh (13/27)
+  loaded precomputed global rotation features
+0008_Yoga001.bvh (14/27)
+  loaded precomputed global rotation features
+0015_JumpOverObstacle001.bvh (15/27)
+  loaded precomputed global rotation features
+0015_KendoKata001.bvh (16/27)
+  loaded precomputed global rotation features
+0017_WushuKicks001.bvh (17/27)
+  loaded precomputed global rotation features
+0018_Bridge001.bvh (18/27)
+  loaded precomputed global rotation features
+0018_Catwalk001.bvh (19/27)
+  Skipping 0018_Catwalk001.bvh (too short, 53 < 65)
+0018_DanceTurns001.bvh (20/27)
+  loaded precomputed global rotation features
+0018_DanceTurns002.bvh (21/27)
+  loaded precomputed global rotation features
+0018_Moonwalk001.bvh (22/27)
+  loaded precomputed global rotation features
+0018_TraditionalChineseDance001.bvh (23/27)
+  Skipping 0018_TraditionalChineseDance001.bvh (too short, 42 < 65)
+0018_Walking001.bvh (24/27)
+  loaded precomputed global rotation features
+0018_XinJiang003.bvh (25/27)
+  loaded precomputed global rotation features
+0019_AdvanceBollywoodDance001.bvh (26/27)
+  loaded precomputed global rotation features
+  1 bad transition(s) detected, affected windows will be skipped
+  Skipped 20 window(s) containing jumps
+0019_BasicBollywoodDance001.bvh (27/27)
+  loaded precomputed global rotation features
+  3 bad transition(s) detected, affected windows will be skipped
+  Skipped 160 window(s) containing jumps
+S1_acting2_BlenderZXY_YmZ.bvh (1/29)
+  loaded precomputed global rotation features
+  1 bad transition(s) detected, affected windows will be skipped
+  Skipped 64 window(s) containing jumps
+S1_freestyle1_BlenderZXY_YmZ.bvh (2/29)
+  loaded precomputed global rotation features
+S1_freestyle2_BlenderZXY_YmZ.bvh (3/29)
+  loaded precomputed global rotation features
+S1_rom1_BlenderZXY_YmZ.bvh (4/29)
+  loaded precomputed global rotation features
+S1_rom2_BlenderZXY_YmZ.bvh (5/29)
+  loaded precomputed global rotation features
+S1_walking1_BlenderZXY_YmZ.bvh (6/29)
+  loaded precomputed global rotation features
+S1_walking2_BlenderZXY_YmZ.bvh (7/29)
+  loaded precomputed global rotation features
+S2_acting1_BlenderZXY_YmZ.bvh (8/29)
+  loaded precomputed global rotation features
+  2 bad transition(s) detected, affected windows will be skipped
+  Skipped 79 window(s) containing jumps
+S2_acting2_BlenderZXY_YmZ.bvh (9/29)
+  loaded precomputed global rotation features
+  1 bad transition(s) detected, affected windows will be skipped
+  Skipped 64 window(s) containing jumps
+S2_freestyle1_BlenderZXY_YmZ.bvh (10/29)
+  loaded precomputed global rotation features
+  6 bad transition(s) detected, affected windows will be skipped
+  Skipped 211 window(s) containing jumps
+S2_freestyle2_BlenderZXY_YmZ.bvh (11/29)
+  loaded precomputed global rotation features
+  2 bad transition(s) detected, affected windows will be skipped
+  Skipped 81 window(s) containing jumps
+S2_rom1_BlenderZXY_YmZ.bvh (12/29)
+  loaded precomputed global rotation features
+  4 bad transition(s) detected, affected windows will be skipped
+  Skipped 108 window(s) containing jumps
+S2_rom2_BlenderZXY_YmZ.bvh (13/29)
+  loaded precomputed global rotation features
+  7 bad transition(s) detected, affected windows will be skipped
+  Skipped 345 window(s) containing jumps
+S2_walking1_BlenderZXY_YmZ.bvh (14/29)
+  loaded precomputed global rotation features
+S3_acting1_BlenderZXY_YmZ.bvh (15/29)
+  loaded precomputed global rotation features
+  4 bad transition(s) detected, affected windows will be skipped
+  Skipped 171 window(s) containing jumps
+S3_acting3_BlenderZXY_YmZ.bvh (16/29)
+  loaded precomputed global rotation features
+  3 bad transition(s) detected, affected windows will be skipped
+  Skipped 165 window(s) containing jumps
+S3_freestyle1_BlenderZXY_YmZ.bvh (17/29)
+  loaded precomputed global rotation features
+  42 bad transition(s) detected, affected windows will be skipped
+  Skipped 487 window(s) containing jumps
+S3_freestyle3_BlenderZXY_YmZ.bvh (18/29)
+  loaded precomputed global rotation features
+  4 bad transition(s) detected, affected windows will be skipped
+  Skipped 174 window(s) containing jumps
+S3_rom1_BlenderZXY_YmZ.bvh (19/29)
+  loaded precomputed global rotation features
+S3_walking1_BlenderZXY_YmZ.bvh (20/29)
+  loaded precomputed global rotation features
+S4_acting3_BlenderZXY_YmZ.bvh (21/29)
+  loaded precomputed global rotation features
+  17 bad transition(s) detected, affected windows will be skipped
+  Skipped 457 window(s) containing jumps
+S4_freestyle3_BlenderZXY_YmZ.bvh (22/29)
+  loaded precomputed global rotation features
+S4_rom3_BlenderZXY_YmZ.bvh (23/29)
+  loaded precomputed global rotation features
+S4_walking2_BlenderZXY_YmZ.bvh (24/29)
+  loaded precomputed global rotation features
+S5_acting3_BlenderZXY_YmZ.bvh (25/29)
+  loaded precomputed global rotation features
+S5_freestyle1_BlenderZXY_YmZ.bvh (26/29)
+  loaded precomputed global rotation features
+S5_freestyle3_BlenderZXY_YmZ.bvh (27/29)
+  loaded precomputed global rotation features
+S5_rom3_BlenderZXY_YmZ.bvh (28/29)
+  loaded precomputed global rotation features2026-08-04 21:04:42,575 - INFO - Using config: abl_fk_off.json
+2026-08-04 21:04:42,575 - INFO - RUN_ID=20260804-210415
+2026-08-04 21:04:42,575 - INFO - Train size: 131766, Validation size: 32951, Dropped at split boundaries: 18798, Unique skeletons: 5
+2026-08-04 21:04:42,575 - INFO - Hyperparameters | step_size=1, context_length=50, gen_frames=15, hid_lyrs=[256, 256, 128, 128, 96, 96], head_num=8, dropout=0.05, facing_normalization=True, skeleton_geometry=True, global_rotations=True, fk_loss=False, mdc_loss=False, mdc_weight=1.0, seed=1, split_seed=1, rot_weight=50.0, pos_weight=1.0, smooth_weight=1.0, transition_weight=1.0, root_pos_weight=0.3, grad_clip_norm=3000.0, early_stopping_patience=20, early_stopping_min_delta=0.5, epochs=1000, batch_size=512, lr=0.001, val_ratio=0.2, params=13326907
+2026-08-04 21:05:48,825 - INFO - Epoch 001 | Train Loss: 312.443889 (rot: 66.327213, pos: 0.000000, root: 246.116674) | Val Loss: 104.728792 (rot: 46.169116, pos: 0.000000, smooth: 0.000000, root: 58.559677) | LR: 1.00e-03
+2026-08-04 21:05:48,876 - INFO - New best val loss 104.728792. Saved: model_20260804-210415-best.pth
+2026-08-04 21:06:28,209 - INFO - Epoch 002 | Train Loss: 76.930232 (rot: 38.062568, pos: 0.000000, root: 38.867664) | Val Loss: 67.980276 (rot: 34.647126, pos: 0.000000, smooth: 0.000000, root: 33.333150) | LR: 1.00e-03
+2026-08-04 21:06:28,341 - INFO - New best val loss 67.980276. Saved: model_20260804-210415-best.pth
+2026-08-04 21:07:06,840 - INFO - Epoch 003 | Train Loss: 61.056591 (rot: 31.366264, pos: 0.000000, root: 29.690327) | Val Loss: 57.754220 (rot: 30.272590, pos: 0.000000, smooth: 0.000000, root: 27.481631) | LR: 1.00e-03
+2026-08-04 21:07:06,882 - INFO - New best val loss 57.754220. Saved: model_20260804-210415-best.pth
+2026-08-04 21:07:44,661 - INFO - Epoch 004 | Train Loss: 52.813424 (rot: 27.984643, pos: 0.000000, root: 24.828782) | Val Loss: 57.741112 (rot: 29.693639, pos: 0.000000, smooth: 0.000000, root: 28.047472) | LR: 1.00e-03
+2026-08-04 21:07:44,704 - INFO - New best val loss 57.741112. Saved: model_20260804-210415-best.pth
+2026-08-04 21:08:22,420 - INFO - Epoch 005 | Train Loss: 47.523842 (rot: 26.032772, pos: 0.000000, root: 21.491069) | Val Loss: 53.443477 (rot: 27.375471, pos: 0.000000, smooth: 0.000000, root: 26.068006) | LR: 1.00e-03
+2026-08-04 21:08:22,463 - INFO - New best val loss 53.443477. Saved: model_20260804-210415-best.pth
+2026-08-04 21:09:00,114 - INFO - Epoch 006 | Train Loss: 52.851190 (rot: 25.144864, pos: 0.000000, root: 27.706326) | Val Loss: 43.831270 (rot: 23.862713, pos: 0.000000, smooth: 0.000000, root: 19.968557) | LR: 1.00e-03
+2026-08-04 21:09:00,155 - INFO - New best val loss 43.831270. Saved: model_20260804-210415-best.pth
+2026-08-04 21:09:37,840 - INFO - Epoch 007 | Train Loss: 42.383526 (rot: 23.868723, pos: 0.000000, root: 18.514803) | Val Loss: 42.571281 (rot: 23.642692, pos: 0.000000, smooth: 0.000000, root: 18.928590) | LR: 1.00e-03
+2026-08-04 21:09:37,881 - INFO - New best val loss 42.571281. Saved: model_20260804-210415-best.pth
+2026-08-04 21:10:15,663 - INFO - Epoch 008 | Train Loss: 39.969519 (rot: 22.918706, pos: 0.000000, root: 17.050812) | Val Loss: 40.552787 (rot: 22.850812, pos: 0.000000, smooth: 0.000000, root: 17.701974) | LR: 1.00e-03
+2026-08-04 21:10:15,706 - INFO - New best val loss 40.552787. Saved: model_20260804-210415-best.pth
+2026-08-04 21:10:53,602 - INFO - Epoch 009 | Train Loss: 40.818417 (rot: 22.240654, pos: 0.000000, root: 18.577762) | Val Loss: 38.379612 (rot: 22.808741, pos: 0.000000, smooth: 0.000000, root: 15.570871) | LR: 1.00e-03
+2026-08-04 21:10:53,643 - INFO - New best val loss 38.379612. Saved: model_20260804-210415-best.pth
+2026-08-04 21:11:31,295 - INFO - Epoch 010 | Train Loss: 42.977960 (rot: 22.686532, pos: 0.000000, root: 20.291427) | Val Loss: 39.637278 (rot: 22.428156, pos: 0.000000, smooth: 0.000000, root: 17.209122) | LR: 1.00e-03
+2026-08-04 21:11:31,334 - INFO - Saved checkpoint: model_20260804-210415-10.pth
+2026-08-04 21:12:09,178 - INFO - Epoch 011 | Train Loss: 38.829715 (rot: 21.855219, pos: 0.000000, root: 16.974497) | Val Loss: 36.895331 (rot: 21.594500, pos: 0.000000, smooth: 0.000000, root: 15.300831) | LR: 1.00e-03
+2026-08-04 21:12:09,221 - INFO - New best val loss 36.895331. Saved: model_20260804-210415-best.pth
+2026-08-04 21:12:47,052 - INFO - Epoch 012 | Train Loss: 44.756815 (rot: 22.438440, pos: 0.000000, root: 22.318374) | Val Loss: 49.879440 (rot: 23.572405, pos: 0.000000, smooth: 0.000000, root: 26.307035) | LR: 1.00e-03
+2026-08-04 21:13:24,794 - INFO - Epoch 013 | Train Loss: 38.435547 (rot: 21.516429, pos: 0.000000, root: 16.919119) | Val Loss: 35.828180 (rot: 21.134347, pos: 0.000000, smooth: 0.000000, root: 14.693833) | LR: 1.00e-03
+2026-08-04 21:13:24,837 - INFO - New best val loss 35.828180. Saved: model_20260804-210415-best.pth
+2026-08-04 21:14:02,599 - INFO - Epoch 014 | Train Loss: 35.554239 (rot: 21.022208, pos: 0.000000, root: 14.532031) | Val Loss: 34.924356 (rot: 20.989218, pos: 0.000000, smooth: 0.000000, root: 13.935139) | LR: 1.00e-03
+2026-08-04 21:14:02,641 - INFO - New best val loss 34.924356. Saved: model_20260804-210415-best.pth
+2026-08-04 21:14:40,374 - INFO - Epoch 015 | Train Loss: 37.915958 (rot: 21.082866, pos: 0.000000, root: 16.833092) | Val Loss: 33.388028 (rot: 20.277696, pos: 0.000000, smooth: 0.000000, root: 13.110332) | LR: 1.00e-03
+2026-08-04 21:14:40,416 - INFO - New best val loss 33.388028. Saved: model_20260804-210415-best.pth
+2026-08-04 21:15:18,142 - INFO - Epoch 016 | Train Loss: 37.521119 (rot: 20.512078, pos: 0.000000, root: 17.009041) | Val Loss: 34.968006 (rot: 20.257596, pos: 0.000000, smooth: 0.000000, root: 14.710410) | LR: 1.00e-03
+2026-08-04 21:15:55,967 - INFO - Epoch 017 | Train Loss: 32.065466 (rot: 20.023588, pos: 0.000000, root: 12.041877) | Val Loss: 33.088731 (rot: 20.039500, pos: 0.000000, smooth: 0.000000, root: 13.049231) | LR: 1.00e-03
+2026-08-04 21:15:56,008 - INFO - New best val loss 33.088731. Saved: model_20260804-210415-best.pth
+2026-08-04 21:16:33,806 - INFO - Epoch 018 | Train Loss: 32.126503 (rot: 19.732015, pos: 0.000000, root: 12.394488) | Val Loss: 34.779697 (rot: 21.364477, pos: 0.000000, smooth: 0.000000, root: 13.415220) | LR: 1.00e-03
+2026-08-04 21:17:11,542 - INFO - Epoch 019 | Train Loss: 33.465255 (rot: 19.676800, pos: 0.000000, root: 13.788455) | Val Loss: 42.550654 (rot: 21.343063, pos: 0.000000, smooth: 0.000000, root: 21.207592) | LR: 1.00e-03
+2026-08-04 21:17:49,247 - INFO - Epoch 020 | Train Loss: 35.192209 (rot: 19.943262, pos: 0.000000, root: 15.248947) | Val Loss: 31.313515 (rot: 19.334750, pos: 0.000000, smooth: 0.000000, root: 11.978765) | LR: 1.00e-03
+2026-08-04 21:17:49,285 - INFO - Saved checkpoint: model_20260804-210415-20.pth
+2026-08-04 21:17:49,326 - INFO - New best val loss 31.313515. Saved: model_20260804-210415-best.pth
+2026-08-04 21:18:27,176 - INFO - Epoch 021 | Train Loss: 29.806361 (rot: 18.983058, pos: 0.000000, root: 10.823303) | Val Loss: 30.912946 (rot: 19.179827, pos: 0.000000, smooth: 0.000000, root: 11.733119) | LR: 1.00e-03
+2026-08-04 21:18:27,219 - INFO - New best val loss 30.912946. Saved: model_20260804-210415-best.pth
+2026-08-04 21:19:04,987 - INFO - Epoch 022 | Train Loss: 31.174390 (rot: 18.697209, pos: 0.000000, root: 12.477182) | Val Loss: 37.353889 (rot: 20.947130, pos: 0.000000, smooth: 0.000000, root: 16.406759) | LR: 1.00e-03
+2026-08-04 21:19:42,752 - INFO - Epoch 023 | Train Loss: 28.917081 (rot: 18.742993, pos: 0.000000, root: 10.174088) | Val Loss: 31.931722 (rot: 19.953611, pos: 0.000000, smooth: 0.000000, root: 11.978111) | LR: 1.00e-03
+2026-08-04 21:20:20,545 - INFO - Epoch 024 | Train Loss: 29.939076 (rot: 18.787158, pos: 0.000000, root: 11.151919) | Val Loss: 45.226488 (rot: 19.737708, pos: 0.000000, smooth: 0.000000, root: 25.488780) | LR: 1.00e-03
+2026-08-04 21:20:58,517 - INFO - Epoch 025 | Train Loss: 30.932980 (rot: 18.470865, pos: 0.000000, root: 12.462114) | Val Loss: 39.639883 (rot: 20.105475, pos: 0.000000, smooth: 0.000000, root: 19.534409) | LR: 1.00e-03
+2026-08-04 21:21:36,452 - INFO - Epoch 026 | Train Loss: 32.752532 (rot: 18.190017, pos: 0.000000, root: 14.562515) | Val Loss: 28.605261 (rot: 18.114695, pos: 0.000000, smooth: 0.000000, root: 10.490565) | LR: 1.00e-03
+2026-08-04 21:21:36,493 - INFO - New best val loss 28.605261. Saved: model_20260804-210415-best.pth
+2026-08-04 21:22:14,356 - INFO - Epoch 027 | Train Loss: 27.677705 (rot: 17.869401, pos: 0.000000, root: 9.808304) | Val Loss: 28.750797 (rot: 18.147627, pos: 0.000000, smooth: 0.000000, root: 10.603169) | LR: 1.00e-03
+2026-08-04 21:22:52,107 - INFO - Epoch 028 | Train Loss: 26.360946 (rot: 17.821419, pos: 0.000000, root: 8.539527) | Val Loss: 30.541170 (rot: 18.541907, pos: 0.000000, smooth: 0.000000, root: 11.999263) | LR: 1.00e-03
+2026-08-04 21:23:29,887 - INFO - Epoch 029 | Train Loss: 24.677044 (rot: 17.204363, pos: 0.000000, root: 7.472681) | Val Loss: 27.288426 (rot: 17.756415, pos: 0.000000, smooth: 0.000000, root: 9.532011) | LR: 1.00e-03
+2026-08-04 21:23:29,930 - INFO - New best val loss 27.288426. Saved: model_20260804-210415-best.pth
+2026-08-04 21:24:07,699 - INFO - Epoch 030 | Train Loss: 24.671424 (rot: 16.984950, pos: 0.000000, root: 7.686474) | Val Loss: 31.328734 (rot: 17.564561, pos: 0.000000, smooth: 0.000000, root: 13.764173) | LR: 1.00e-03
+2026-08-04 21:24:07,740 - INFO - Saved checkpoint: model_20260804-210415-30.pth
+2026-08-04 21:24:07,743 - INFO - Pruned old checkpoint: model_20260804-210415-10.pth
+2026-08-04 21:24:45,628 - INFO - Epoch 031 | Train Loss: 25.992711 (rot: 17.371079, pos: 0.000000, root: 8.621632) | Val Loss: 28.297713 (rot: 17.737737, pos: 0.000000, smooth: 0.000000, root: 10.559976) | LR: 1.00e-03
+2026-08-04 21:25:23,361 - INFO - Epoch 032 | Train Loss: 26.815802 (rot: 17.046000, pos: 0.000000, root: 9.769802) | Val Loss: 27.350812 (rot: 17.667888, pos: 0.000000, smooth: 0.000000, root: 9.682925) | LR: 1.00e-03
+2026-08-04 21:26:01,149 - INFO - Epoch 033 | Train Loss: 26.113408 (rot: 17.183317, pos: 0.000000, root: 8.930091) | Val Loss: 33.656905 (rot: 18.739315, pos: 0.000000, smooth: 0.000000, root: 14.917591) | LR: 1.00e-03
+2026-08-04 21:26:38,855 - INFO - Epoch 034 | Train Loss: 28.693991 (rot: 16.836949, pos: 0.000000, root: 11.857042) | Val Loss: 27.745113 (rot: 17.114419, pos: 0.000000, smooth: 0.000000, root: 10.630694) | LR: 1.00e-03
+2026-08-04 21:27:16,667 - INFO - Epoch 035 | Train Loss: 22.440042 (rot: 16.370890, pos: 0.000000, root: 6.069152) | Val Loss: 25.717144 (rot: 16.962062, pos: 0.000000, smooth: 0.000000, root: 8.755082) | LR: 1.00e-03
+2026-08-04 21:27:16,709 - INFO - New best val loss 25.717144. Saved: model_20260804-210415-best.pth
+2026-08-04 21:27:54,577 - INFO - Epoch 036 | Train Loss: 24.942523 (rot: 16.742819, pos: 0.000000, root: 8.199704) | Val Loss: 26.589617 (rot: 17.366164, pos: 0.000000, smooth: 0.000000, root: 9.223453) | LR: 1.00e-03
+2026-08-04 21:28:32,313 - INFO - Epoch 037 | Train Loss: 21.941642 (rot: 15.925076, pos: 0.000000, root: 6.016566) | Val Loss: 26.800266 (rot: 16.847772, pos: 0.000000, smooth: 0.000000, root: 9.952494) | LR: 1.00e-03
+2026-08-04 21:29:10,088 - INFO - Epoch 038 | Train Loss: 23.699925 (rot: 16.108365, pos: 0.000000, root: 7.591561) | Val Loss: 26.828490 (rot: 16.567480, pos: 0.000000, smooth: 0.000000, root: 10.261009) | LR: 1.00e-03
+2026-08-04 21:29:47,857 - INFO - Epoch 039 | Train Loss: 22.429638 (rot: 15.972544, pos: 0.000000, root: 6.457094) | Val Loss: 28.170268 (rot: 16.935329, pos: 0.000000, smooth: 0.000000, root: 11.234939) | LR: 1.00e-03
+2026-08-04 21:30:25,741 - INFO - Epoch 040 | Train Loss: 21.489634 (rot: 15.978234, pos: 0.000000, root: 5.511400) | Val Loss: 28.239097 (rot: 16.544693, pos: 0.000000, smooth: 0.000000, root: 11.694405) | LR: 1.00e-03
+2026-08-04 21:30:25,780 - INFO - Saved checkpoint: model_20260804-210415-40.pth
+2026-08-04 21:30:25,783 - INFO - Pruned old checkpoint: model_20260804-210415-20.pth
+2026-08-04 21:31:03,634 - INFO - Epoch 041 | Train Loss: 21.195831 (rot: 15.446769, pos: 0.000000, root: 5.749061) | Val Loss: 25.138022 (rot: 16.513336, pos: 0.000000, smooth: 0.000000, root: 8.624686) | LR: 1.00e-03
+2026-08-04 21:31:03,674 - INFO - New best val loss 25.138022. Saved: model_20260804-210415-best.pth
+2026-08-04 21:31:41,591 - INFO - Epoch 042 | Train Loss: 20.764977 (rot: 15.722806, pos: 0.000000, root: 5.042171) | Val Loss: 29.258863 (rot: 17.156626, pos: 0.000000, smooth: 0.000000, root: 12.102237) | LR: 1.00e-03
+2026-08-04 21:32:19,560 - INFO - Epoch 043 | Train Loss: 25.932095 (rot: 15.915284, pos: 0.000000, root: 10.016810) | Val Loss: 25.395904 (rot: 16.080287, pos: 0.000000, smooth: 0.000000, root: 9.315618) | LR: 1.00e-03
+2026-08-04 21:32:57,393 - INFO - Epoch 044 | Train Loss: 20.071876 (rot: 14.985258, pos: 0.000000, root: 5.086618) | Val Loss: 27.598790 (rot: 16.423033, pos: 0.000000, smooth: 0.000000, root: 11.175757) | LR: 1.00e-03
+2026-08-04 21:33:35,134 - INFO - Epoch 045 | Train Loss: 19.589679 (rot: 15.159042, pos: 0.000000, root: 4.430637) | Val Loss: 24.284709 (rot: 16.041618, pos: 0.000000, smooth: 0.000000, root: 8.243091) | LR: 1.00e-03
+2026-08-04 21:33:35,176 - INFO - New best val loss 24.284709. Saved: model_20260804-210415-best.pth
+2026-08-04 21:34:12,919 - INFO - Epoch 046 | Train Loss: 20.698482 (rot: 14.999444, pos: 0.000000, root: 5.699038) | Val Loss: 26.013968 (rot: 16.280530, pos: 0.000000, smooth: 0.000000, root: 9.733438) | LR: 1.00e-03
+2026-08-04 21:34:50,844 - INFO - Epoch 047 | Train Loss: 19.957636 (rot: 14.987428, pos: 0.000000, root: 4.970208) | Val Loss: 26.176047 (rot: 16.649825, pos: 0.000000, smooth: 0.000000, root: 9.526222) | LR: 1.00e-03
+2026-08-04 21:35:28,624 - INFO - Epoch 048 | Train Loss: 18.434144 (rot: 14.611933, pos: 0.000000, root: 3.822211) | Val Loss: 30.199017 (rot: 16.625663, pos: 0.000000, smooth: 0.000000, root: 13.573354) | LR: 1.00e-03
+2026-08-04 21:36:06,390 - INFO - Epoch 049 | Train Loss: 22.252446 (rot: 15.049621, pos: 0.000000, root: 7.202825) | Val Loss: 24.715555 (rot: 15.769012, pos: 0.000000, smooth: 0.000000, root: 8.946543) | LR: 1.00e-03
+2026-08-04 21:36:44,294 - INFO - Epoch 050 | Train Loss: 18.351835 (rot: 14.342795, pos: 0.000000, root: 4.009040) | Val Loss: 25.669822 (rot: 15.971799, pos: 0.000000, smooth: 0.000000, root: 9.698023) | LR: 1.00e-03
+2026-08-04 21:36:44,332 - INFO - Saved checkpoint: model_20260804-210415-50.pth
+2026-08-04 21:36:44,335 - INFO - Pruned old checkpoint: model_20260804-210415-30.pth
+2026-08-04 21:37:22,100 - INFO - Epoch 051 | Train Loss: 18.837747 (rot: 14.689418, pos: 0.000000, root: 4.148329) | Val Loss: 34.588123 (rot: 17.080077, pos: 0.000000, smooth: 0.000000, root: 17.508045) | LR: 1.00e-03
+2026-08-04 21:37:59,843 - INFO - Epoch 052 | Train Loss: 22.068951 (rot: 14.841056, pos: 0.000000, root: 7.227895) | Val Loss: 23.504535 (rot: 15.496969, pos: 0.000000, smooth: 0.000000, root: 8.007566) | LR: 1.00e-03
+2026-08-04 21:37:59,884 - INFO - New best val loss 23.504535. Saved: model_20260804-210415-best.pth
+2026-08-04 21:38:37,693 - INFO - Epoch 053 | Train Loss: 19.411292 (rot: 14.377882, pos: 0.000000, root: 5.033410) | Val Loss: 23.657957 (rot: 15.633280, pos: 0.000000, smooth: 0.000000, root: 8.024676) | LR: 1.00e-03
+2026-08-04 21:39:15,445 - INFO - Epoch 054 | Train Loss: 17.811394 (rot: 13.997776, pos: 0.000000, root: 3.813618) | Val Loss: 26.215520 (rot: 15.710262, pos: 0.000000, smooth: 0.000000, root: 10.505257) | LR: 1.00e-03
+2026-08-04 21:39:53,228 - INFO - Epoch 055 | Train Loss: 19.736743 (rot: 14.451298, pos: 0.000000, root: 5.285445) | Val Loss: 23.605187 (rot: 15.445729, pos: 0.000000, smooth: 0.000000, root: 8.159458) | LR: 1.00e-03
+2026-08-04 21:40:31,140 - INFO - Epoch 056 | Train Loss: 16.049666 (rot: 13.338703, pos: 0.000000, root: 2.710963) | Val Loss: 28.314353 (rot: 15.726362, pos: 0.000000, smooth: 0.000000, root: 12.587991) | LR: 1.00e-03
+2026-08-04 21:41:08,986 - INFO - Epoch 057 | Train Loss: 16.330168 (rot: 13.444554, pos: 0.000000, root: 2.885613) | Val Loss: 25.605483 (rot: 15.957819, pos: 0.000000, smooth: 0.000000, root: 9.647664) | LR: 1.00e-03
+2026-08-04 21:41:46,833 - INFO - Epoch 058 | Train Loss: 19.551865 (rot: 13.734055, pos: 0.000000, root: 5.817810) | Val Loss: 28.996303 (rot: 17.696160, pos: 0.000000, smooth: 0.000000, root: 11.300143) | LR: 1.00e-03
+2026-08-04 21:42:24,778 - INFO - Epoch 059 | Train Loss: 16.632334 (rot: 13.337296, pos: 0.000000, root: 3.295038) | Val Loss: 30.357567 (rot: 16.303645, pos: 0.000000, smooth: 0.000000, root: 14.053923) | LR: 1.00e-03
+2026-08-04 21:43:02,668 - INFO - Epoch 060 | Train Loss: 17.698820 (rot: 13.847372, pos: 0.000000, root: 3.851449) | Val Loss: 23.587641 (rot: 15.201849, pos: 0.000000, smooth: 0.000000, root: 8.385792) | LR: 1.00e-03
+2026-08-04 21:43:02,711 - INFO - Saved checkpoint: model_20260804-210415-60.pth
+2026-08-04 21:43:02,714 - INFO - Pruned old checkpoint: model_20260804-210415-40.pth
+2026-08-04 21:43:40,574 - INFO - Epoch 061 | Train Loss: 16.542867 (rot: 13.138308, pos: 0.000000, root: 3.404558) | Val Loss: 24.150717 (rot: 15.834772, pos: 0.000000, smooth: 0.000000, root: 8.315944) | LR: 1.00e-03
+2026-08-04 21:44:18,314 - INFO - Epoch 062 | Train Loss: 17.515578 (rot: 13.548100, pos: 0.000000, root: 3.967478) | Val Loss: 25.909690 (rot: 15.508432, pos: 0.000000, smooth: 0.000000, root: 10.401258) | LR: 1.00e-03
+2026-08-04 21:44:56,113 - INFO - Epoch 063 | Train Loss: 18.661173 (rot: 13.516212, pos: 0.000000, root: 5.144960) | Val Loss: 26.716871 (rot: 15.847791, pos: 0.000000, smooth: 0.000000, root: 10.869079) | LR: 5.00e-04
+2026-08-04 21:45:33,938 - INFO - Epoch 064 | Train Loss: 13.911008 (rot: 12.140556, pos: 0.000000, root: 1.770452) | Val Loss: 22.176357 (rot: 14.578772, pos: 0.000000, smooth: 0.000000, root: 7.597585) | LR: 5.00e-04
+2026-08-04 21:45:33,980 - INFO - New best val loss 22.176357. Saved: model_20260804-210415-best.pth
+2026-08-04 21:46:11,727 - INFO - Epoch 065 | Train Loss: 13.217722 (rot: 11.848239, pos: 0.000000, root: 1.369482) | Val Loss: 22.161371 (rot: 14.569704, pos: 0.000000, smooth: 0.000000, root: 7.591667) | LR: 5.00e-04
+2026-08-04 21:46:11,770 - INFO - New best val loss 22.161371. Saved: model_20260804-210415-best.pth
+2026-08-04 21:46:49,605 - INFO - Epoch 066 | Train Loss: 12.997537 (rot: 11.680203, pos: 0.000000, root: 1.317334) | Val Loss: 22.625898 (rot: 15.060052, pos: 0.000000, smooth: 0.000000, root: 7.565845) | LR: 5.00e-04
+2026-08-04 21:47:27,416 - INFO - Epoch 067 | Train Loss: 13.023537 (rot: 11.764521, pos: 0.000000, root: 1.259017) | Val Loss: 22.350725 (rot: 14.776768, pos: 0.000000, smooth: 0.000000, root: 7.573957) | LR: 5.00e-04
+2026-08-04 21:48:05,208 - INFO - Epoch 068 | Train Loss: 13.684170 (rot: 12.008158, pos: 0.000000, root: 1.676012) | Val Loss: 22.575337 (rot: 14.760882, pos: 0.000000, smooth: 0.000000, root: 7.814455) | LR: 5.00e-04
+2026-08-04 21:48:43,025 - INFO - Epoch 069 | Train Loss: 12.953562 (rot: 11.577007, pos: 0.000000, root: 1.376555) | Val Loss: 22.399410 (rot: 14.816358, pos: 0.000000, smooth: 0.000000, root: 7.583053) | LR: 5.00e-04
+2026-08-04 21:49:20,844 - INFO - Epoch 070 | Train Loss: 13.982997 (rot: 11.804036, pos: 0.000000, root: 2.178961) | Val Loss: 22.127411 (rot: 14.522676, pos: 0.000000, smooth: 0.000000, root: 7.604734) | LR: 5.00e-04
+2026-08-04 21:49:20,883 - INFO - Saved checkpoint: model_20260804-210415-70.pth
+2026-08-04 21:49:20,886 - INFO - Pruned old checkpoint: model_20260804-210415-50.pth
+2026-08-04 21:49:20,927 - INFO - New best val loss 22.127411. Saved: model_20260804-210415-best.pth
+2026-08-04 21:49:58,709 - INFO - Epoch 071 | Train Loss: 12.581538 (rot: 11.323455, pos: 0.000000, root: 1.258083) | Val Loss: 21.892708 (rot: 14.428261, pos: 0.000000, smooth: 0.000000, root: 7.464447) | LR: 5.00e-04
+2026-08-04 21:49:58,750 - INFO - New best val loss 21.892708. Saved: model_20260804-210415-best.pth
+2026-08-04 21:50:36,508 - INFO - Epoch 072 | Train Loss: 13.520352 (rot: 11.631419, pos: 0.000000, root: 1.888933) | Val Loss: 22.322262 (rot: 14.375469, pos: 0.000000, smooth: 0.000000, root: 7.946793) | LR: 5.00e-04
+2026-08-04 21:51:14,387 - INFO - Epoch 073 | Train Loss: 12.535258 (rot: 11.165532, pos: 0.000000, root: 1.369726) | Val Loss: 21.936195 (rot: 14.294616, pos: 0.000000, smooth: 0.000000, root: 7.641578) | LR: 5.00e-04
+2026-08-04 21:51:52,119 - INFO - Epoch 074 | Train Loss: 12.135651 (rot: 10.982168, pos: 0.000000, root: 1.153483) | Val Loss: 21.937913 (rot: 14.321768, pos: 0.000000, smooth: 0.000000, root: 7.616145) | LR: 5.00e-04
+2026-08-04 21:52:29,941 - INFO - Epoch 075 | Train Loss: 12.678353 (rot: 11.150009, pos: 0.000000, root: 1.528344) | Val Loss: 22.198396 (rot: 14.701778, pos: 0.000000, smooth: 0.000000, root: 7.496619) | LR: 2.50e-04
+2026-08-04 21:53:07,792 - INFO - Epoch 076 | Train Loss: 11.541034 (rot: 10.630218, pos: 0.000000, root: 0.910816) | Val Loss: 21.444843 (rot: 14.123299, pos: 0.000000, smooth: 0.000000, root: 7.321544) | LR: 2.50e-04
+2026-08-04 21:53:07,833 - INFO - New best val loss 21.444843. Saved: model_20260804-210415-best.pth
+2026-08-04 21:53:45,562 - INFO - Epoch 077 | Train Loss: 11.437833 (rot: 10.562595, pos: 0.000000, root: 0.875238) | Val Loss: 21.423715 (rot: 14.090395, pos: 0.000000, smooth: 0.000000, root: 7.333320) | LR: 2.50e-04
+2026-08-04 21:53:45,603 - INFO - New best val loss 21.423715. Saved: model_20260804-210415-best.pth
+2026-08-04 21:54:23,371 - INFO - Epoch 078 | Train Loss: 11.376998 (rot: 10.501889, pos: 0.000000, root: 0.875109) | Val Loss: 21.367693 (rot: 14.058678, pos: 0.000000, smooth: 0.000000, root: 7.309015) | LR: 2.50e-04
+2026-08-04 21:54:23,412 - INFO - New best val loss 21.367693. Saved: model_20260804-210415-best.pth
+2026-08-04 21:55:01,234 - INFO - Epoch 079 | Train Loss: 11.308600 (rot: 10.443949, pos: 0.000000, root: 0.864651) | Val Loss: 21.460447 (rot: 14.115746, pos: 0.000000, smooth: 0.000000, root: 7.344701) | LR: 2.50e-04
+2026-08-04 21:55:39,048 - INFO - Epoch 080 | Train Loss: 11.589589 (rot: 10.596552, pos: 0.000000, root: 0.993037) | Val Loss: 21.344885 (rot: 14.059685, pos: 0.000000, smooth: 0.000000, root: 7.285200) | LR: 2.50e-04
+2026-08-04 21:55:39,090 - INFO - Saved checkpoint: model_20260804-210415-80.pth
+2026-08-04 21:55:39,093 - INFO - Pruned old checkpoint: model_20260804-210415-60.pth
+2026-08-04 21:55:39,134 - INFO - New best val loss 21.344885. Saved: model_20260804-210415-best.pth
+2026-08-04 21:56:16,958 - INFO - Epoch 081 | Train Loss: 11.266810 (rot: 10.369266, pos: 0.000000, root: 0.897544) | Val Loss: 21.363789 (rot: 14.075309, pos: 0.000000, smooth: 0.000000, root: 7.288480) | LR: 2.50e-04
+2026-08-04 21:56:54,710 - INFO - Epoch 082 | Train Loss: 11.305604 (rot: 10.355741, pos: 0.000000, root: 0.949863) | Val Loss: 21.371024 (rot: 14.052528, pos: 0.000000, smooth: 0.000000, root: 7.318496) | LR: 2.50e-04
+2026-08-04 21:57:32,450 - INFO - Epoch 083 | Train Loss: 11.166869 (rot: 10.321687, pos: 0.000000, root: 0.845182) | Val Loss: 21.763123 (rot: 14.328217, pos: 0.000000, smooth: 0.000000, root: 7.434907) | LR: 2.50e-04
+2026-08-04 21:58:10,212 - INFO - Epoch 084 | Train Loss: 11.193598 (rot: 10.261003, pos: 0.000000, root: 0.932595) | Val Loss: 21.401285 (rot: 14.074823, pos: 0.000000, smooth: 0.000000, root: 7.326462) | LR: 2.50e-04
+2026-08-04 21:58:47,946 - INFO - Epoch 085 | Train Loss: 11.082974 (rot: 10.140091, pos: 0.000000, root: 0.942884) | Val Loss: 21.359254 (rot: 14.018091, pos: 0.000000, smooth: 0.000000, root: 7.341163) | LR: 2.50e-04
+2026-08-04 21:59:25,731 - INFO - Epoch 086 | Train Loss: 11.044513 (rot: 10.225028, pos: 0.000000, root: 0.819485) | Val Loss: 21.359239 (rot: 14.055667, pos: 0.000000, smooth: 0.000000, root: 7.303572) | LR: 2.50e-04
+2026-08-04 22:00:03,544 - INFO - Epoch 087 | Train Loss: 10.930077 (rot: 10.041221, pos: 0.000000, root: 0.888856) | Val Loss: 21.450216 (rot: 14.105809, pos: 0.000000, smooth: 0.000000, root: 7.344407) | LR: 1.25e-04
+2026-08-04 22:00:41,312 - INFO - Epoch 088 | Train Loss: 10.637832 (rot: 9.908326, pos: 0.000000, root: 0.729506) | Val Loss: 21.132804 (rot: 13.962638, pos: 0.000000, smooth: 0.000000, root: 7.170165) | LR: 1.25e-04
+2026-08-04 22:00:41,355 - INFO - New best val loss 21.132804. Saved: model_20260804-210415-best.pth
+2026-08-04 22:01:19,138 - INFO - Epoch 089 | Train Loss: 10.543490 (rot: 9.850014, pos: 0.000000, root: 0.693476) | Val Loss: 21.123216 (rot: 13.936922, pos: 0.000000, smooth: 0.000000, root: 7.186294) | LR: 1.25e-04
+2026-08-04 22:01:19,181 - INFO - New best val loss 21.123216. Saved: model_20260804-210415-best.pth
+2026-08-04 22:01:56,897 - INFO - Epoch 090 | Train Loss: 10.530624 (rot: 9.831632, pos: 0.000000, root: 0.698991) | Val Loss: 21.192713 (rot: 13.971661, pos: 0.000000, smooth: 0.000000, root: 7.221052) | LR: 1.25e-04
+2026-08-04 22:01:56,937 - INFO - Saved checkpoint: model_20260804-210415-90.pth
+2026-08-04 22:01:56,940 - INFO - Pruned old checkpoint: model_20260804-210415-70.pth
+2026-08-04 22:02:34,723 - INFO - Epoch 091 | Train Loss: 10.484426 (rot: 9.798575, pos: 0.000000, root: 0.685851) | Val Loss: 21.101752 (rot: 13.927203, pos: 0.000000, smooth: 0.000000, root: 7.174548) | LR: 1.25e-04
+2026-08-04 22:02:34,763 - INFO - New best val loss 21.101752. Saved: model_20260804-210415-best.pth
+2026-08-04 22:03:12,577 - INFO - Epoch 092 | Train Loss: 10.471407 (rot: 9.772525, pos: 0.000000, root: 0.698881) | Val Loss: 21.093034 (rot: 13.918724, pos: 0.000000, smooth: 0.000000, root: 7.174310) | LR: 1.25e-04
+2026-08-04 22:03:12,618 - INFO - New best val loss 21.093034. Saved: model_20260804-210415-best.pth
+2026-08-04 22:03:50,424 - INFO - Epoch 093 | Train Loss: 10.462812 (rot: 9.755587, pos: 0.000000, root: 0.707225) | Val Loss: 21.094679 (rot: 13.919708, pos: 0.000000, smooth: 0.000000, root: 7.174971) | LR: 1.25e-04
+2026-08-04 22:04:28,225 - INFO - Epoch 094 | Train Loss: 10.432089 (rot: 9.738137, pos: 0.000000, root: 0.693952) | Val Loss: 21.089498 (rot: 13.908665, pos: 0.000000, smooth: 0.000000, root: 7.180833) | LR: 1.25e-04
+2026-08-04 22:04:28,266 - INFO - New best val loss 21.089498. Saved: model_20260804-210415-best.pth
+2026-08-04 22:05:06,061 - INFO - Epoch 095 | Train Loss: 10.383318 (rot: 9.696646, pos: 0.000000, root: 0.686672) | Val Loss: 21.105815 (rot: 13.934404, pos: 0.000000, smooth: 0.000000, root: 7.171411) | LR: 1.25e-04
+2026-08-04 22:05:43,800 - INFO - Epoch 096 | Train Loss: 10.448315 (rot: 9.716007, pos: 0.000000, root: 0.732308) | Val Loss: 21.074351 (rot: 13.908260, pos: 0.000000, smooth: 0.000000, root: 7.166091) | LR: 1.25e-04
+2026-08-04 22:05:43,841 - INFO - New best val loss 21.074351. Saved: model_20260804-210415-best.pth
+2026-08-04 22:05:43,842 - INFO - Early stopping triggered at epoch 96. Best Val Loss: 21.074351
+2026-08-04 22:05:43,880 - INFO - Training completed. Saved final model: model_20260804-210415-final.pth
+
+S5_walking2_BlenderZXY_YmZ.bvh (29/29)
+  loaded precomputed global rotation features
+Dataset ready: 183515 samples, 5 unique skeletons

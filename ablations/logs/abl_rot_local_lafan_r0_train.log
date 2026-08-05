@@ -1,0 +1,331 @@
+2026-08-04 07:42:19,158 - INFO - Using config: abl_rot_local_lafan.json
+2026-08-04 07:42:19,158 - INFO - RUN_ID=20260804-074133
+2026-08-04 07:42:19,158 - INFO - Train size: 287391, Validation size: 71906, Dropped at split boundaries: 48513, Unique skeletons: 1
+2026-08-04 07:42:19,159 - INFO - Hyperparameters | step_size=1, context_length=50, gen_frames=15, hid_lyrs=[256, 256, 128, 128, 96, 96], head_num=8, dropout=0.05, facing_normalization=True, skeleton_geometry=True, global_rotations=False, fk_loss=True, mdc_loss=False, mdc_weight=1.0, seed=0, split_seed=0, rot_weight=50.0, pos_weight=1.0, smooth_weight=1.0, transition_weight=1.0, root_pos_weight=0.3, grad_clip_norm=3000.0, early_stopping_patience=20, early_stopping_min_delta=0.5, epochs=1000, batch_size=512, lr=0.001, val_ratio=0.2, params=13326907
+2026-08-04 07:45:54,445 - INFO - Epoch 001 | Train Loss: 771.475334 (rot: 83.677043, pos: 244.665839, root: 199.232293) | Val Loss: 213.053627 (rot: 72.390858, pos: 77.508990, smooth: 33.067358, root: 30.086422) | LR: 1.00e-03
+2026-08-04 07:45:54,496 - INFO - New best val loss 213.053627. Saved: model_20260804-074133-best.pth
+2026-08-04 07:48:59,339 - INFO - Epoch 002 | Train Loss: 204.628365 (rot: 65.768413, pos: 80.167635, root: 21.174621) | Val Loss: 160.795496 (rot: 57.086204, pos: 62.649190, smooth: 23.726807, root: 17.333295) | LR: 1.00e-03
+2026-08-04 07:48:59,383 - INFO - New best val loss 160.795496. Saved: model_20260804-074133-best.pth
+2026-08-04 07:51:43,882 - INFO - Epoch 003 | Train Loss: 171.023377 (rot: 56.483148, pos: 68.789596, root: 13.905693) | Val Loss: 143.919659 (rot: 52.857908, pos: 54.899961, smooth: 22.917678, root: 13.244111) | LR: 1.00e-03
+2026-08-04 07:51:43,929 - INFO - New best val loss 143.919659. Saved: model_20260804-074133-best.pth
+2026-08-04 07:54:48,939 - INFO - Epoch 004 | Train Loss: 155.152098 (rot: 54.722613, pos: 60.258710, root: 11.375106) | Val Loss: 136.701236 (rot: 51.708220, pos: 51.958412, smooth: 20.062625, root: 12.971979) | LR: 1.00e-03
+2026-08-04 07:54:48,982 - INFO - New best val loss 136.701236. Saved: model_20260804-074133-best.pth
+2026-08-04 07:57:55,679 - INFO - Epoch 005 | Train Loss: 145.919565 (rot: 53.467710, pos: 55.780971, root: 9.602822) | Val Loss: 131.821325 (rot: 51.102488, pos: 48.861599, smooth: 19.762158, root: 12.095079) | LR: 1.00e-03
+2026-08-04 07:57:55,728 - INFO - New best val loss 131.821325. Saved: model_20260804-074133-best.pth
+2026-08-04 08:00:59,930 - INFO - Epoch 006 | Train Loss: 139.649685 (rot: 52.170351, pos: 52.797024, root: 8.397739) | Val Loss: 123.467182 (rot: 48.958839, pos: 46.555289, smooth: 18.508870, root: 9.444184) | LR: 1.00e-03
+2026-08-04 08:00:59,975 - INFO - New best val loss 123.467182. Saved: model_20260804-074133-best.pth
+2026-08-04 08:02:54,211 - INFO - Epoch 007 | Train Loss: 132.858363 (rot: 50.675959, pos: 49.287858, root: 7.598316) | Val Loss: 121.964629 (rot: 48.613360, pos: 46.010159, smooth: 18.525060, root: 8.816050) | LR: 1.00e-03
+2026-08-04 08:02:54,251 - INFO - New best val loss 121.964629. Saved: model_20260804-074133-best.pth
+2026-08-04 08:04:36,699 - INFO - Epoch 008 | Train Loss: 127.425479 (rot: 50.194234, pos: 46.334145, root: 6.697712) | Val Loss: 120.443753 (rot: 48.183949, pos: 44.983836, smooth: 18.739029, root: 8.536939) | LR: 1.00e-03
+2026-08-04 08:04:36,746 - INFO - New best val loss 120.443753. Saved: model_20260804-074133-best.pth
+2026-08-04 08:06:19,388 - INFO - Epoch 009 | Train Loss: 123.837431 (rot: 49.964436, pos: 44.192895, root: 6.056106) | Val Loss: 118.879324 (rot: 48.124835, pos: 44.773746, smooth: 18.136337, root: 7.844405) | LR: 1.00e-03
+2026-08-04 08:06:19,431 - INFO - New best val loss 118.879324. Saved: model_20260804-074133-best.pth
+2026-08-04 08:08:02,059 - INFO - Epoch 010 | Train Loss: 121.923735 (rot: 49.772412, pos: 42.892344, root: 5.716515) | Val Loss: 116.526191 (rot: 47.887018, pos: 43.226809, smooth: 17.464611, root: 7.947752) | LR: 1.00e-03
+2026-08-04 08:08:02,099 - INFO - Saved checkpoint: model_20260804-074133-10.pth
+2026-08-04 08:08:02,140 - INFO - New best val loss 116.526191. Saved: model_20260804-074133-best.pth
+2026-08-04 08:09:44,825 - INFO - Epoch 011 | Train Loss: 119.036855 (rot: 49.617191, pos: 41.278076, root: 5.191054) | Val Loss: 115.903489 (rot: 47.690850, pos: 42.880908, smooth: 17.715383, root: 7.616347) | LR: 1.00e-03
+2026-08-04 08:09:44,867 - INFO - New best val loss 115.903489. Saved: model_20260804-074133-best.pth
+2026-08-04 08:11:27,650 - INFO - Epoch 012 | Train Loss: 118.849561 (rot: 49.509846, pos: 40.963319, root: 5.027682) | Val Loss: 114.606361 (rot: 47.610711, pos: 42.282683, smooth: 17.581568, root: 7.131399) | LR: 1.00e-03
+2026-08-04 08:11:27,692 - INFO - New best val loss 114.606361. Saved: model_20260804-074133-best.pth
+2026-08-04 08:13:10,335 - INFO - Epoch 013 | Train Loss: 115.591849 (rot: 49.294367, pos: 39.263570, root: 4.418544) | Val Loss: 115.011096 (rot: 47.352795, pos: 43.471850, smooth: 16.857837, root: 7.328614) | LR: 1.00e-03
+2026-08-04 08:14:53,071 - INFO - Epoch 014 | Train Loss: 113.913903 (rot: 49.149431, pos: 38.246061, root: 4.166792) | Val Loss: 115.377969 (rot: 47.627798, pos: 42.735809, smooth: 17.763550, root: 7.250813) | LR: 1.00e-03
+2026-08-04 08:16:35,839 - INFO - Epoch 015 | Train Loss: 113.219232 (rot: 49.074274, pos: 37.646510, root: 4.077346) | Val Loss: 113.772948 (rot: 47.389907, pos: 41.902884, smooth: 17.270384, root: 7.209774) | LR: 1.00e-03
+2026-08-04 08:16:35,883 - INFO - New best val loss 113.772948. Saved: model_20260804-074133-best.pth
+2026-08-04 08:18:18,640 - INFO - Epoch 016 | Train Loss: 110.800792 (rot: 48.965082, pos: 36.286779, root: 3.729051) | Val Loss: 113.435748 (rot: 47.055122, pos: 42.399731, smooth: 16.754576, root: 7.226319) | LR: 1.00e-03
+2026-08-04 08:18:18,682 - INFO - New best val loss 113.435748. Saved: model_20260804-074133-best.pth
+2026-08-04 08:20:01,327 - INFO - Epoch 017 | Train Loss: 110.269052 (rot: 48.864433, pos: 35.926049, root: 3.590123) | Val Loss: 112.691508 (rot: 46.965235, pos: 42.281072, smooth: 16.582074, root: 6.863127) | LR: 1.00e-03
+2026-08-04 08:20:01,370 - INFO - New best val loss 112.691508. Saved: model_20260804-074133-best.pth
+2026-08-04 08:21:44,039 - INFO - Epoch 018 | Train Loss: 109.031826 (rot: 48.808083, pos: 35.154123, root: 3.338383) | Val Loss: 112.635752 (rot: 47.183967, pos: 42.195071, smooth: 16.338775, root: 6.917940) | LR: 1.00e-03
+2026-08-04 08:21:44,081 - INFO - New best val loss 112.635752. Saved: model_20260804-074133-best.pth
+2026-08-04 08:23:26,792 - INFO - Epoch 019 | Train Loss: 107.843827 (rot: 48.731144, pos: 34.392338, root: 3.225378) | Val Loss: 112.546929 (rot: 46.968471, pos: 42.428732, smooth: 16.382967, root: 6.766758) | LR: 1.00e-03
+2026-08-04 08:23:26,835 - INFO - New best val loss 112.546929. Saved: model_20260804-074133-best.pth
+2026-08-04 08:25:09,631 - INFO - Epoch 020 | Train Loss: 106.883745 (rot: 48.669087, pos: 33.811117, root: 2.977541) | Val Loss: 112.400564 (rot: 46.986404, pos: 41.800212, smooth: 16.061333, root: 7.552615) | LR: 1.00e-03
+2026-08-04 08:25:09,671 - INFO - Saved checkpoint: model_20260804-074133-20.pth
+2026-08-04 08:25:09,713 - INFO - New best val loss 112.400564. Saved: model_20260804-074133-best.pth
+2026-08-04 08:26:52,548 - INFO - Epoch 021 | Train Loss: 105.617741 (rot: 48.587745, pos: 32.983276, root: 2.934915) | Val Loss: 113.551214 (rot: 46.772085, pos: 43.029641, smooth: 16.726870, root: 7.022619) | LR: 1.00e-03
+2026-08-04 08:28:35,187 - INFO - Epoch 022 | Train Loss: 106.137083 (rot: 48.580923, pos: 33.134855, root: 2.875207) | Val Loss: 112.667610 (rot: 46.820104, pos: 42.034414, smooth: 16.350209, root: 7.462883) | LR: 1.00e-03
+2026-08-04 08:30:17,808 - INFO - Epoch 023 | Train Loss: 104.337304 (rot: 48.531657, pos: 32.087896, root: 2.605620) | Val Loss: 110.766115 (rot: 46.893606, pos: 41.265239, smooth: 16.098269, root: 6.509001) | LR: 1.00e-03
+2026-08-04 08:30:17,849 - INFO - New best val loss 110.766115. Saved: model_20260804-074133-best.pth
+2026-08-04 08:32:00,481 - INFO - Epoch 024 | Train Loss: 104.006948 (rot: 48.580190, pos: 31.661731, root: 2.570219) | Val Loss: 111.191802 (rot: 46.903909, pos: 41.129483, smooth: 16.316065, root: 6.842343) | LR: 1.00e-03
+2026-08-04 08:33:43,393 - INFO - Epoch 025 | Train Loss: 102.749332 (rot: 48.473231, pos: 30.943718, root: 2.461497) | Val Loss: 110.878057 (rot: 46.742928, pos: 41.382835, smooth: 16.281221, root: 6.471074) | LR: 1.00e-03
+2026-08-04 08:35:26,368 - INFO - Epoch 026 | Train Loss: 102.144372 (rot: 48.412148, pos: 30.530482, root: 2.354909) | Val Loss: 111.649103 (rot: 46.788707, pos: 42.046424, smooth: 16.201761, root: 6.612211) | LR: 1.00e-03
+2026-08-04 08:37:08,917 - INFO - Epoch 027 | Train Loss: 104.583542 (rot: 48.444848, pos: 31.805086, root: 2.748924) | Val Loss: 110.157455 (rot: 46.739023, pos: 40.955253, smooth: 16.024630, root: 6.438549) | LR: 1.00e-03
+2026-08-04 08:37:08,959 - INFO - New best val loss 110.157455. Saved: model_20260804-074133-best.pth
+2026-08-04 08:38:51,678 - INFO - Epoch 028 | Train Loss: 100.980439 (rot: 48.275800, pos: 29.921033, root: 2.197043) | Val Loss: 110.915311 (rot: 46.551197, pos: 41.625676, smooth: 16.204410, root: 6.534029) | LR: 1.00e-03
+2026-08-04 08:40:34,539 - INFO - Epoch 029 | Train Loss: 100.552484 (rot: 48.205546, pos: 29.591882, root: 2.109545) | Val Loss: 111.491452 (rot: 46.588692, pos: 41.813927, smooth: 16.059180, root: 7.029652) | LR: 1.00e-03
+2026-08-04 08:42:18,010 - INFO - Epoch 030 | Train Loss: 100.485671 (rot: 48.144734, pos: 29.452607, root: 2.123868) | Val Loss: 111.517113 (rot: 46.477752, pos: 42.072849, smooth: 16.250017, root: 6.716495) | LR: 1.00e-03
+2026-08-04 08:42:18,049 - INFO - Saved checkpoint: model_20260804-074133-30.pth
+2026-08-04 08:42:18,053 - INFO - Pruned old checkpoint: model_20260804-074133-10.pth
+2026-08-04 08:44:00,887 - INFO - Epoch 031 | Train Loss: 99.768004 (rot: 48.066894, pos: 29.114455, root: 2.061759) | Val Loss: 110.479574 (rot: 46.503256, pos: 41.442750, smooth: 15.960957, root: 6.572611) | LR: 1.00e-03
+2026-08-04 08:45:43,607 - INFO - Epoch 032 | Train Loss: 103.649137 (rot: 48.474224, pos: 30.932216, root: 2.364687) | Val Loss: 111.724201 (rot: 46.520804, pos: 42.358793, smooth: 16.353267, root: 6.491337) | LR: 1.00e-03
+2026-08-04 08:47:26,173 - INFO - Epoch 033 | Train Loss: 99.852986 (rot: 47.995706, pos: 29.157625, root: 1.956997) | Val Loss: 110.189417 (rot: 46.315232, pos: 41.252169, smooth: 15.999612, root: 6.622403) | LR: 1.00e-03
+2026-08-04 08:49:08,945 - INFO - Epoch 034 | Train Loss: 98.793566 (rot: 47.947386, pos: 28.478082, root: 1.896331) | Val Loss: 110.319152 (rot: 46.309550, pos: 41.380687, smooth: 16.158893, root: 6.470023) | LR: 1.00e-03
+2026-08-04 08:50:51,757 - INFO - Epoch 035 | Train Loss: 98.383318 (rot: 47.898741, pos: 28.249394, root: 1.796289) | Val Loss: 109.988337 (rot: 46.436040, pos: 41.178631, smooth: 15.942139, root: 6.431527) | LR: 1.00e-03
+2026-08-04 08:50:51,800 - INFO - New best val loss 109.988337. Saved: model_20260804-074133-best.pth
+2026-08-04 08:52:34,483 - INFO - Epoch 036 | Train Loss: 98.561159 (rot: 47.846256, pos: 28.423638, root: 1.925804) | Val Loss: 109.585663 (rot: 46.152251, pos: 41.177082, smooth: 15.634830, root: 6.621501) | LR: 1.00e-03
+2026-08-04 08:52:34,524 - INFO - New best val loss 109.585663. Saved: model_20260804-074133-best.pth
+2026-08-04 08:54:17,227 - INFO - Epoch 037 | Train Loss: 98.415408 (rot: 47.764126, pos: 28.335777, root: 1.800814) | Val Loss: 111.288925 (rot: 46.223199, pos: 41.943072, smooth: 15.953472, root: 7.169181) | LR: 1.00e-03
+2026-08-04 08:55:59,932 - INFO - Epoch 038 | Train Loss: 97.961688 (rot: 47.764104, pos: 28.000852, root: 1.803878) | Val Loss: 109.906669 (rot: 46.213550, pos: 41.244692, smooth: 15.972940, root: 6.475486) | LR: 1.00e-03
+2026-08-04 08:57:42,457 - INFO - Epoch 039 | Train Loss: 97.377272 (rot: 47.696028, pos: 27.683633, root: 1.741647) | Val Loss: 110.199804 (rot: 46.180264, pos: 41.638678, smooth: 15.913380, root: 6.467482) | LR: 1.00e-03
+2026-08-04 08:59:25,160 - INFO - Epoch 040 | Train Loss: 96.779136 (rot: 47.657155, pos: 27.338351, root: 1.658934) | Val Loss: 110.301618 (rot: 46.068085, pos: 41.710427, smooth: 15.803223, root: 6.719883) | LR: 1.00e-03
+2026-08-04 08:59:25,199 - INFO - Saved checkpoint: model_20260804-074133-40.pth
+2026-08-04 08:59:25,202 - INFO - Pruned old checkpoint: model_20260804-074133-20.pth
+2026-08-04 09:01:07,970 - INFO - Epoch 041 | Train Loss: 97.370504 (rot: 47.675417, pos: 27.586062, root: 1.709670) | Val Loss: 109.388736 (rot: 46.162653, pos: 40.953122, smooth: 15.718981, root: 6.553980) | LR: 1.00e-03
+2026-08-04 09:01:08,011 - INFO - New best val loss 109.388736. Saved: model_20260804-074133-best.pth
+2026-08-04 09:02:50,735 - INFO - Epoch 042 | Train Loss: 96.267463 (rot: 47.596712, pos: 27.034558, root: 1.583702) | Val Loss: 108.793948 (rot: 46.030603, pos: 40.727830, smooth: 15.591027, root: 6.444488) | LR: 1.00e-03
+2026-08-04 09:02:50,777 - INFO - New best val loss 108.793948. Saved: model_20260804-074133-best.pth
+2026-08-04 09:04:33,468 - INFO - Epoch 043 | Train Loss: 96.229778 (rot: 47.631859, pos: 26.914297, root: 1.589400) | Val Loss: 108.679188 (rot: 46.119270, pos: 40.625976, smooth: 15.408283, root: 6.525659) | LR: 1.00e-03
+2026-08-04 09:04:33,509 - INFO - New best val loss 108.679188. Saved: model_20260804-074133-best.pth
+2026-08-04 09:06:16,287 - INFO - Epoch 044 | Train Loss: 96.625490 (rot: 47.606138, pos: 27.139579, root: 1.598487) | Val Loss: 109.652464 (rot: 46.412831, pos: 41.030008, smooth: 15.805237, root: 6.404389) | LR: 1.00e-03
+2026-08-04 09:07:59,024 - INFO - Epoch 045 | Train Loss: 95.781277 (rot: 47.596530, pos: 26.660953, root: 1.515768) | Val Loss: 109.432032 (rot: 45.956222, pos: 41.233273, smooth: 15.656129, root: 6.586409) | LR: 1.00e-03
+2026-08-04 09:09:41,859 - INFO - Epoch 046 | Train Loss: 95.981657 (rot: 47.539860, pos: 26.753473, root: 1.508437) | Val Loss: 109.189948 (rot: 45.950383, pos: 41.022720, smooth: 15.719403, root: 6.497443) | LR: 1.00e-03
+2026-08-04 09:11:24,647 - INFO - Epoch 047 | Train Loss: 96.271919 (rot: 47.559045, pos: 26.832835, root: 1.575562) | Val Loss: 109.263104 (rot: 46.094351, pos: 40.845834, smooth: 15.536590, root: 6.786329) | LR: 1.00e-03
+2026-08-04 09:13:07,445 - INFO - Epoch 048 | Train Loss: 95.205917 (rot: 47.439524, pos: 26.341328, root: 1.449454) | Val Loss: 108.821127 (rot: 45.780654, pos: 41.062867, smooth: 15.570619, root: 6.406987) | LR: 1.00e-03
+2026-08-04 09:14:50,194 - INFO - Epoch 049 | Train Loss: 94.838772 (rot: 47.382527, pos: 26.135639, root: 1.368350) | Val Loss: 108.569624 (rot: 45.907823, pos: 40.778508, smooth: 15.603585, root: 6.279707) | LR: 1.00e-03
+2026-08-04 09:14:50,239 - INFO - New best val loss 108.569624. Saved: model_20260804-074133-best.pth
+2026-08-04 09:16:33,133 - INFO - Epoch 050 | Train Loss: 96.018941 (rot: 47.515985, pos: 26.699823, root: 1.494217) | Val Loss: 108.370101 (rot: 45.942623, pos: 40.581560, smooth: 15.416710, root: 6.429209) | LR: 1.00e-03
+2026-08-04 09:16:33,173 - INFO - Saved checkpoint: model_20260804-074133-50.pth
+2026-08-04 09:16:33,176 - INFO - Pruned old checkpoint: model_20260804-074133-30.pth
+2026-08-04 09:16:33,217 - INFO - New best val loss 108.370101. Saved: model_20260804-074133-best.pth
+2026-08-04 09:18:15,679 - INFO - Epoch 051 | Train Loss: 94.527386 (rot: 47.394579, pos: 25.958570, root: 1.385551) | Val Loss: 108.197205 (rot: 45.872343, pos: 40.480395, smooth: 15.308724, root: 6.535742) | LR: 1.00e-03
+2026-08-04 09:18:15,720 - INFO - New best val loss 108.197205. Saved: model_20260804-074133-best.pth
+2026-08-04 09:19:58,305 - INFO - Epoch 052 | Train Loss: 95.682320 (rot: 47.414026, pos: 26.579133, root: 1.445160) | Val Loss: 108.403959 (rot: 45.960305, pos: 40.590906, smooth: 15.476036, root: 6.376712) | LR: 1.00e-03
+2026-08-04 09:21:41,076 - INFO - Epoch 053 | Train Loss: 94.587238 (rot: 47.386747, pos: 25.954918, root: 1.366640) | Val Loss: 108.496199 (rot: 45.956484, pos: 40.301590, smooth: 15.345693, root: 6.892432) | LR: 1.00e-03
+2026-08-04 09:23:23,904 - INFO - Epoch 054 | Train Loss: 94.107058 (rot: 47.315362, pos: 25.746135, root: 1.338484) | Val Loss: 108.288143 (rot: 45.880772, pos: 40.647430, smooth: 15.466808, root: 6.293133) | LR: 1.00e-03
+2026-08-04 09:25:06,588 - INFO - Epoch 055 | Train Loss: 94.411377 (rot: 47.318465, pos: 25.829296, root: 1.321548) | Val Loss: 109.291901 (rot: 45.799960, pos: 41.500807, smooth: 15.551883, root: 6.439251) | LR: 1.00e-03
+2026-08-04 09:26:49,178 - INFO - Epoch 056 | Train Loss: 94.470915 (rot: 47.298403, pos: 25.911234, root: 1.348011) | Val Loss: 109.186295 (rot: 45.890354, pos: 41.144607, smooth: 15.677413, root: 6.473921) | LR: 1.00e-03
+2026-08-04 09:28:31,768 - INFO - Epoch 057 | Train Loss: 94.753812 (rot: 47.275948, pos: 25.974756, root: 1.375880) | Val Loss: 108.978177 (rot: 45.790194, pos: 41.057928, smooth: 15.562895, root: 6.567161) | LR: 1.00e-03
+2026-08-04 09:30:14,447 - INFO - Epoch 058 | Train Loss: 94.160431 (rot: 47.271483, pos: 25.642385, root: 1.347885) | Val Loss: 110.767559 (rot: 45.751545, pos: 42.096893, smooth: 15.948830, root: 6.970291) | LR: 1.00e-03
+2026-08-04 09:31:57,115 - INFO - Epoch 059 | Train Loss: 93.400551 (rot: 47.212261, pos: 25.294039, root: 1.238550) | Val Loss: 108.323203 (rot: 45.781587, pos: 40.599107, smooth: 15.450483, root: 6.492026) | LR: 1.00e-03
+2026-08-04 09:33:39,843 - INFO - Epoch 060 | Train Loss: 93.769219 (rot: 47.230843, pos: 25.451901, root: 1.260770) | Val Loss: 108.354813 (rot: 45.680424, pos: 40.864604, smooth: 15.333886, root: 6.475898) | LR: 1.00e-03
+2026-08-04 09:33:39,884 - INFO - Saved checkpoint: model_20260804-074133-60.pth
+2026-08-04 09:33:39,887 - INFO - Pruned old checkpoint: model_20260804-074133-40.pth
+2026-08-04 09:35:22,502 - INFO - Epoch 061 | Train Loss: 93.605747 (rot: 47.204860, pos: 25.355569, root: 1.274801) | Val Loss: 108.666883 (rot: 45.771635, pos: 41.068256, smooth: 15.238466, root: 6.588526) | LR: 1.00e-03
+2026-08-04 09:37:05,112 - INFO - Epoch 062 | Train Loss: 93.525990 (rot: 47.192649, pos: 25.282364, root: 1.239921) | Val Loss: 107.806847 (rot: 45.790984, pos: 40.562874, smooth: 15.137755, root: 6.315233) | LR: 5.00e-04
+2026-08-04 09:37:05,153 - INFO - New best val loss 107.806847. Saved: model_20260804-074133-best.pth
+2026-08-04 09:38:47,882 - INFO - Epoch 063 | Train Loss: 91.092643 (rot: 47.036174, pos: 24.100120, root: 0.836059) | Val Loss: 106.733539 (rot: 45.662741, pos: 39.926066, smooth: 15.007411, root: 6.137321) | LR: 5.00e-04
+2026-08-04 09:38:47,925 - INFO - New best val loss 106.733539. Saved: model_20260804-074133-best.pth
+2026-08-04 09:40:30,445 - INFO - Epoch 064 | Train Loss: 91.121643 (rot: 47.021232, pos: 24.055294, root: 0.854300) | Val Loss: 106.585875 (rot: 45.664071, pos: 39.814765, smooth: 14.885874, root: 6.221165) | LR: 5.00e-04
+2026-08-04 09:40:30,486 - INFO - New best val loss 106.585875. Saved: model_20260804-074133-best.pth
+2026-08-04 09:42:13,129 - INFO - Epoch 065 | Train Loss: 90.660697 (rot: 46.957220, pos: 23.836252, root: 0.816492) | Val Loss: 107.190462 (rot: 45.836523, pos: 40.079697, smooth: 15.027472, root: 6.246770) | LR: 5.00e-04
+2026-08-04 09:43:55,798 - INFO - Epoch 066 | Train Loss: 90.742497 (rot: 46.958322, pos: 23.817119, root: 0.850517) | Val Loss: 107.156654 (rot: 45.613762, pos: 40.241661, smooth: 15.167477, root: 6.133754) | LR: 5.00e-04
+2026-08-04 09:45:38,647 - INFO - Epoch 067 | Train Loss: 90.598965 (rot: 46.941039, pos: 23.762057, root: 0.839137) | Val Loss: 108.486900 (rot: 45.904691, pos: 40.588136, smooth: 15.636204, root: 6.357869) | LR: 5.00e-04
+2026-08-04 09:47:21,379 - INFO - Epoch 068 | Train Loss: 90.691916 (rot: 46.905322, pos: 23.815229, root: 0.860912) | Val Loss: 106.895816 (rot: 45.469755, pos: 40.294205, smooth: 14.968066, root: 6.163791) | LR: 5.00e-04
+2026-08-04 09:49:03,925 - INFO - Epoch 069 | Train Loss: 90.508528 (rot: 46.889059, pos: 23.706743, root: 0.823805) | Val Loss: 106.725176 (rot: 45.509121, pos: 40.090531, smooth: 14.913546, root: 6.211978) | LR: 5.00e-04
+2026-08-04 09:50:46,978 - INFO - Epoch 070 | Train Loss: 90.709175 (rot: 46.894596, pos: 23.798915, root: 0.860019) | Val Loss: 107.024222 (rot: 45.593637, pos: 40.034789, smooth: 15.021191, root: 6.374605) | LR: 5.00e-04
+2026-08-04 09:50:47,023 - INFO - Saved checkpoint: model_20260804-074133-70.pth
+2026-08-04 09:50:47,026 - INFO - Pruned old checkpoint: model_20260804-074133-50.pth
+2026-08-04 09:52:29,821 - INFO - Epoch 071 | Train Loss: 90.149482 (rot: 46.770063, pos: 23.549984, root: 0.815671) | Val Loss: 106.279248 (rot: 45.481004, pos: 39.807526, smooth: 14.863346, root: 6.127372) | LR: 5.00e-04
+2026-08-04 09:52:29,863 - INFO - New best val loss 106.279248. Saved: model_20260804-074133-best.pth
+2026-08-04 09:54:12,767 - INFO - Epoch 072 | Train Loss: 90.659118 (rot: 46.776694, pos: 23.836136, root: 0.860531) | Val Loss: 106.730867 (rot: 45.304702, pos: 40.315145, smooth: 14.899490, root: 6.211530) | LR: 5.00e-04
+2026-08-04 09:55:55,410 - INFO - Epoch 073 | Train Loss: 90.230911 (rot: 46.714614, pos: 23.657749, root: 0.814957) | Val Loss: 106.322791 (rot: 45.452275, pos: 39.854667, smooth: 14.868683, root: 6.147166) | LR: 5.00e-04
+2026-08-04 09:57:38,179 - INFO - Epoch 074 | Train Loss: 90.084092 (rot: 46.725235, pos: 23.539068, root: 0.797634) | Val Loss: 106.592087 (rot: 45.494244, pos: 40.053132, smooth: 14.843116, root: 6.201594) | LR: 2.50e-04
+2026-08-04 09:59:21,008 - INFO - Epoch 075 | Train Loss: 88.776348 (rot: 46.662680, pos: 22.847013, root: 0.651478) | Val Loss: 105.599240 (rot: 45.370270, pos: 39.498238, smooth: 14.661227, root: 6.069505) | LR: 2.50e-04
+2026-08-04 09:59:21,050 - INFO - New best val loss 105.599240. Saved: model_20260804-074133-best.pth
+2026-08-04 10:01:03,856 - INFO - Epoch 076 | Train Loss: 88.665330 (rot: 46.592094, pos: 22.827975, root: 0.634380) | Val Loss: 105.737306 (rot: 45.430540, pos: 39.587055, smooth: 14.596322, root: 6.123389) | LR: 2.50e-04
+2026-08-04 10:02:46,650 - INFO - Epoch 077 | Train Loss: 88.366416 (rot: 46.544368, pos: 22.698872, root: 0.636976) | Val Loss: 105.844743 (rot: 45.355329, pos: 39.654360, smooth: 14.729848, root: 6.105207) | LR: 2.50e-04
+2026-08-04 10:04:29,372 - INFO - Epoch 078 | Train Loss: 88.738273 (rot: 46.552785, pos: 22.890450, root: 0.641622) | Val Loss: 105.561199 (rot: 45.397182, pos: 39.554289, smooth: 14.541648, root: 6.068079) | LR: 2.50e-04
+2026-08-04 10:04:29,414 - INFO - New best val loss 105.561199. Saved: model_20260804-074133-best.pth
+2026-08-04 10:06:12,305 - INFO - Epoch 079 | Train Loss: 88.669320 (rot: 46.544939, pos: 22.852482, root: 0.642981) | Val Loss: 105.593142 (rot: 45.358468, pos: 39.494929, smooth: 14.565443, root: 6.174302) | LR: 2.50e-04
+2026-08-04 10:07:54,936 - INFO - Epoch 080 | Train Loss: 88.478914 (rot: 46.516059, pos: 22.737541, root: 0.631844) | Val Loss: 105.741208 (rot: 45.426313, pos: 39.611658, smooth: 14.553057, root: 6.150180) | LR: 2.50e-04
+2026-08-04 10:07:54,977 - INFO - Saved checkpoint: model_20260804-074133-80.pth
+2026-08-04 10:07:54,980 - INFO - Pruned old checkpoint: model_20260804-074133-60.pth
+2026-08-04 10:09:37,690 - INFO - Epoch 081 | Train Loss: 88.229541 (rot: 46.477709, pos: 22.664240, root: 0.621636) | Val Loss: 105.910976 (rot: 45.446993, pos: 39.541847, smooth: 14.792120, root: 6.130016) | LR: 2.50e-04
+2026-08-04 10:11:20,593 - INFO - Epoch 082 | Train Loss: 88.749747 (rot: 46.516634, pos: 22.937442, root: 0.640336) | Val Loss: 105.593180 (rot: 45.386073, pos: 39.408892, smooth: 14.717216, root: 6.080999) | LR: 2.50e-04
+2026-08-04 10:13:03,276 - INFO - Epoch 083 | Train Loss: 88.135793 (rot: 46.473078, pos: 22.633638, root: 0.624389) | Val Loss: 105.436975 (rot: 45.457237, pos: 39.395800, smooth: 14.509996, root: 6.073943) | LR: 2.50e-04
+2026-08-04 10:13:03,319 - INFO - New best val loss 105.436975. Saved: model_20260804-074133-best.pth
+2026-08-04 10:14:46,203 - INFO - Epoch 084 | Train Loss: 88.009607 (rot: 46.459286, pos: 22.606325, root: 0.629364) | Val Loss: 105.726481 (rot: 45.245327, pos: 39.723973, smooth: 14.578149, root: 6.179031) | LR: 2.50e-04
+2026-08-04 10:16:29,004 - INFO - Epoch 085 | Train Loss: 88.103626 (rot: 46.475397, pos: 22.698128, root: 0.626895) | Val Loss: 105.558647 (rot: 45.350299, pos: 39.726443, smooth: 14.425425, root: 6.056479) | LR: 2.50e-04
+2026-08-04 10:18:11,777 - INFO - Epoch 086 | Train Loss: 87.794112 (rot: 46.490308, pos: 22.554458, root: 0.613528) | Val Loss: 105.521566 (rot: 45.349251, pos: 39.692894, smooth: 14.376396, root: 6.103026) | LR: 1.25e-04
+2026-08-04 10:19:54,975 - INFO - Epoch 087 | Train Loss: 87.294890 (rot: 46.463417, pos: 22.312942, root: 0.550654) | Val Loss: 104.899414 (rot: 45.319467, pos: 39.283097, smooth: 14.262404, root: 6.034447) | LR: 1.25e-04
+2026-08-04 10:19:55,019 - INFO - New best val loss 104.899414. Saved: model_20260804-074133-best.pth
+2026-08-04 10:21:37,802 - INFO - Epoch 088 | Train Loss: 87.182919 (rot: 46.490726, pos: 22.240053, root: 0.545398) | Val Loss: 105.066497 (rot: 45.389387, pos: 39.268958, smooth: 14.333867, root: 6.074285) | LR: 1.25e-04
+2026-08-04 10:23:20,375 - INFO - Epoch 089 | Train Loss: 87.183645 (rot: 46.500264, pos: 22.231808, root: 0.541354) | Val Loss: 105.070080 (rot: 45.399721, pos: 39.406755, smooth: 14.225530, root: 6.038075) | LR: 1.25e-04
+2026-08-04 10:25:03,176 - INFO - Epoch 090 | Train Loss: 87.080128 (rot: 46.508955, pos: 22.159151, root: 0.542808) | Val Loss: 105.080145 (rot: 45.435936, pos: 39.403893, smooth: 14.207599, root: 6.032716) | LR: 1.25e-04
+2026-08-04 10:25:03,216 - INFO - Saved checkpoint: model_20260804-074133-90.pth
+2026-08-04 10:25:03,219 - INFO - Pruned old checkpoint: model_20260804-074133-70.pth
+2026-08-04 10:26:46,075 - INFO - Epoch 091 | Train Loss: 87.062375 (rot: 46.548730, pos: 22.159142, root: 0.538716) | Val Loss: 105.005454 (rot: 45.471420, pos: 39.345727, smooth: 14.159972, root: 6.028336) | LR: 1.25e-04
+2026-08-04 10:28:28,696 - INFO - Epoch 092 | Train Loss: 86.925597 (rot: 46.546611, pos: 22.081390, root: 0.540441) | Val Loss: 104.981492 (rot: 45.447049, pos: 39.314185, smooth: 14.145687, root: 6.074571) | LR: 1.25e-04
+2026-08-04 10:30:11,324 - INFO - Epoch 093 | Train Loss: 86.944062 (rot: 46.564451, pos: 22.075244, root: 0.537578) | Val Loss: 105.379256 (rot: 45.540862, pos: 39.460298, smooth: 14.334944, root: 6.043152) | LR: 1.25e-04
+2026-08-04 10:31:54,050 - INFO - Epoch 094 | Train Loss: 86.678217 (rot: 46.511243, pos: 22.035706, root: 0.534853) | Val Loss: 104.844159 (rot: 45.405724, pos: 39.357328, smooth: 14.025604, root: 6.055503) | LR: 1.25e-04
+2026-08-04 10:31:54,096 - INFO - New best val loss 104.844159. Saved: model_20260804-074133-best.pth
+2026-08-04 10:33:36,697 - INFO - Epoch 095 | Train Loss: 86.784865 (rot: 46.471914, pos: 22.175646, root: 0.535917) | Val Loss: 104.756433 (rot: 45.321804, pos: 39.442040, smooth: 13.969178, root: 6.023410) | LR: 1.25e-04
+2026-08-04 10:33:36,739 - INFO - New best val loss 104.756433. Saved: model_20260804-074133-best.pth
+2026-08-04 10:35:19,439 - INFO - Epoch 096 | Train Loss: 86.397943 (rot: 46.405886, pos: 22.013610, root: 0.529770) | Val Loss: 104.564707 (rot: 45.323939, pos: 39.245871, smooth: 13.936137, root: 6.058760) | LR: 1.25e-04
+2026-08-04 10:35:19,480 - INFO - New best val loss 104.564707. Saved: model_20260804-074133-best.pth
+2026-08-04 10:37:02,148 - INFO - Epoch 097 | Train Loss: 86.014292 (rot: 46.391103, pos: 21.837884, root: 0.531283) | Val Loss: 104.519941 (rot: 45.309178, pos: 39.282118, smooth: 13.872800, root: 6.055845) | LR: 1.25e-04
+2026-08-04 10:37:02,189 - INFO - New best val loss 104.519941. Saved: model_20260804-074133-best.pth
+2026-08-04 10:38:44,823 - INFO - Epoch 098 | Train Loss: 85.840378 (rot: 46.369398, pos: 21.743611, root: 0.528361) | Val Loss: 104.447936 (rot: 45.275080, pos: 39.347591, smooth: 13.813944, root: 6.011320) | LR: 6.25e-05
+2026-08-04 10:38:44,865 - INFO - New best val loss 104.447936. Saved: model_20260804-074133-best.pth
+2026-08-04 10:40:27,535 - INFO - Epoch 099 | Train Loss: 85.509169 (rot: 46.340114, pos: 21.606234, root: 0.497620) | Val Loss: 104.338074 (rot: 45.239175, pos: 39.302545, smooth: 13.803173, root: 5.993180) | LR: 6.25e-05
+2026-08-04 10:40:27,577 - INFO - New best val loss 104.338074. Saved: model_20260804-074133-best.pth
+2026-08-04 10:42:10,177 - INFO - Epoch 100 | Train Loss: 85.565674 (rot: 46.320925, pos: 21.622719, root: 0.497930) | Val Loss: 104.396844 (rot: 45.217153, pos: 39.362960, smooth: 13.802946, root: 6.013786) | LR: 6.25e-05
+2026-08-04 10:42:10,217 - INFO - Saved checkpoint: model_20260804-074133-100.pth
+2026-08-04 10:42:10,221 - INFO - Pruned old checkpoint: model_20260804-074133-80.pth
+2026-08-04 10:43:53,087 - INFO - Epoch 101 | Train Loss: 85.398359 (rot: 46.326789, pos: 21.541953, root: 0.495094) | Val Loss: 104.324213 (rot: 45.226876, pos: 39.299401, smooth: 13.779582, root: 6.018353) | LR: 6.25e-05
+2026-08-04 10:43:53,130 - INFO - New best val loss 104.324213. Saved: model_20260804-074133-best.pth
+2026-08-04 10:45:35,666 - INFO - Epoch 102 | Train Loss: 85.362251 (rot: 46.309365, pos: 21.551388, root: 0.492239) | Val Loss: 104.337890 (rot: 45.236842, pos: 39.305315, smooth: 13.791472, root: 6.004262) | LR: 6.25e-05
+2026-08-04 10:47:18,518 - INFO - Epoch 103 | Train Loss: 85.530863 (rot: 46.316384, pos: 21.637655, root: 0.492615) | Val Loss: 104.249858 (rot: 45.243889, pos: 39.236712, smooth: 13.756327, root: 6.012931) | LR: 6.25e-05
+2026-08-04 10:47:18,561 - INFO - New best val loss 104.249858. Saved: model_20260804-074133-best.pth
+2026-08-04 10:49:01,248 - INFO - Epoch 104 | Train Loss: 85.567178 (rot: 46.316724, pos: 21.635628, root: 0.495140) | Val Loss: 104.305952 (rot: 45.210913, pos: 39.297759, smooth: 13.778181, root: 6.019098) | LR: 6.25e-05
+2026-08-04 10:50:44,004 - INFO - Epoch 105 | Train Loss: 85.415923 (rot: 46.300429, pos: 21.568841, root: 0.491472) | Val Loss: 104.354295 (rot: 45.232944, pos: 39.331365, smooth: 13.786610, root: 6.003376) | LR: 6.25e-05
+2026-08-04 10:52:26,602 - INFO - Epoch 106 | Train Loss: 85.253506 (rot: 46.295462, pos: 21.478619, root: 0.487981) | Val Loss: 104.354350 (rot: 45.189002, pos: 39.359058, smooth: 13.788938, root: 6.017353) | LR: 6.25e-05
+2026-08-04 10:54:09,263 - INFO - Epoch 107 | Train Loss: 85.331986 (rot: 46.301439, pos: 21.524539, root: 0.488235) | Val Loss: 104.359348 (rot: 45.218285, pos: 39.378901, smooth: 13.754591, root: 6.007571) | LR: 6.25e-05
+2026-08-04 10:55:51,948 - INFO - Epoch 108 | Train Loss: 85.434181 (rot: 46.291829, pos: 21.579376, root: 0.488743) | Val Loss: 104.333029 (rot: 45.180502, pos: 39.387663, smooth: 13.749056, root: 6.015807) | LR: 6.25e-05
+2026-08-04 10:57:34,614 - INFO - Epoch 109 | Train Loss: 85.341010 (rot: 46.280240, pos: 21.536326, root: 0.485469) | Val Loss: 104.378447 (rot: 45.192835, pos: 39.396678, smooth: 13.770052, root: 6.018882) | LR: 6.25e-05
+2026-08-04 10:59:17,392 - INFO - Epoch 110 | Train Loss: 85.146120 (rot: 46.277129, pos: 21.423139, root: 0.486008) | Val Loss: 104.399696 (rot: 45.249104, pos: 39.344391, smooth: 13.777983, root: 6.028217) | LR: 3.13e-05
+2026-08-04 10:59:17,434 - INFO - Saved checkpoint: model_20260804-074133-110.pth
+2026-08-04 10:59:17,437 - INFO - Pruned old checkpoint: model_20260804-074133-90.pth
+2026-08-04 11:01:00,107 - INFO - Epoch 111 | Train Loss: 85.151413 (rot: 46.274496, pos: 21.425918, root: 0.471897) | Val Loss: 104.209563 (rot: 45.151334, pos: 39.313617, smooth: 13.750147, root: 5.994465) | LR: 3.13e-05
+2026-08-04 11:01:00,150 - INFO - New best val loss 104.209563. Saved: model_20260804-074133-best.pth
+2026-08-04 11:02:42,773 - INFO - Epoch 112 | Train Loss: 85.054980 (rot: 46.273048, pos: 21.393109, root: 0.469206) | Val Loss: 104.167672 (rot: 45.156963, pos: 39.260041, smooth: 13.734023, root: 6.016644) | LR: 3.13e-05
+2026-08-04 11:02:42,815 - INFO - New best val loss 104.167672. Saved: model_20260804-074133-best.pth
+2026-08-04 11:04:25,529 - INFO - Epoch 113 | Train Loss: 85.120480 (rot: 46.272087, pos: 21.396634, root: 0.470226) | Val Loss: 104.171920 (rot: 45.153618, pos: 39.287145, smooth: 13.721629, root: 6.009529) | LR: 3.13e-05
+2026-08-04 11:06:08,387 - INFO - Epoch 114 | Train Loss: 84.937167 (rot: 46.260764, pos: 21.331219, root: 0.468213) | Val Loss: 104.239384 (rot: 45.193408, pos: 39.278018, smooth: 13.760305, root: 6.007652) | LR: 3.13e-05
+2026-08-04 11:07:51,202 - INFO - Epoch 115 | Train Loss: 84.924358 (rot: 46.261349, pos: 21.321731, root: 0.467958) | Val Loss: 104.180589 (rot: 45.166018, pos: 39.292708, smooth: 13.716193, root: 6.005670) | LR: 3.13e-05
+2026-08-04 11:09:34,023 - INFO - Epoch 116 | Train Loss: 84.957457 (rot: 46.244732, pos: 21.321143, root: 0.467535) | Val Loss: 104.208757 (rot: 45.156023, pos: 39.319275, smooth: 13.732621, root: 6.000838) | LR: 3.13e-05
+2026-08-04 11:11:16,654 - INFO - Epoch 117 | Train Loss: 84.900144 (rot: 46.228924, pos: 21.334761, root: 0.467089) | Val Loss: 104.119835 (rot: 45.162093, pos: 39.218359, smooth: 13.724990, root: 6.014392) | LR: 3.13e-05
+2026-08-04 11:11:16,695 - INFO - New best val loss 104.119835. Saved: model_20260804-074133-best.pth
+2026-08-04 11:12:59,382 - INFO - Epoch 118 | Train Loss: 84.852022 (rot: 46.248480, pos: 21.279691, root: 0.464659) | Val Loss: 104.069488 (rot: 45.166767, pos: 39.193953, smooth: 13.695127, root: 6.013641) | LR: 3.13e-05
+2026-08-04 11:12:59,426 - INFO - New best val loss 104.069488. Saved: model_20260804-074133-best.pth
+2026-08-04 11:14:42,122 - INFO - Epoch 119 | Train Loss: 84.717816 (rot: 46.243700, pos: 21.212822, root: 0.465828) | Val Loss: 104.076827 (rot: 45.151602, pos: 39.223407, smooth: 13.703648, root: 5.998171) | LR: 3.13e-05
+2026-08-04 11:14:42,122 - INFO - Early stopping triggered at epoch 119. Best Val Loss: 104.069488
+2026-08-04 11:14:42,162 - INFO - Training completed. Saved final model: model_20260804-074133-final.pth
+Loading dataset...
+aiming1_subject1.bvh (1/65)
+  loaded precomputed local rotation features
+aiming1_subject4.bvh (2/65)
+  loaded precomputed local rotation features
+aiming2_subject2.bvh (3/65)
+  loaded precomputed local rotation features
+aiming2_subject3.bvh (4/65)
+  loaded precomputed local rotation features
+dance1_subject1.bvh (5/65)
+  loaded precomputed local rotation features
+dance1_subject2.bvh (6/65)
+  loaded precomputed local rotation features
+  2 bad transition(s) detected, affected windows will be skipped
+  Skipped 71 window(s) containing jumps
+dance1_subject3.bvh (7/65)
+  loaded precomputed local rotation features
+dance2_subject1.bvh (8/65)
+  loaded precomputed local rotation features
+dance2_subject2.bvh (9/65)
+  loaded precomputed local rotation features
+dance2_subject3.bvh (10/65)
+  loaded precomputed local rotation features
+dance2_subject4.bvh (11/65)
+  loaded precomputed local rotation features
+fallAndGetUp1_subject1.bvh (12/65)
+  loaded precomputed local rotation features
+fallAndGetUp1_subject4.bvh (13/65)
+  loaded precomputed local rotation features
+fallAndGetUp1_subject5.bvh (14/65)
+  loaded precomputed local rotation features
+fallAndGetUp2_subject2.bvh (15/65)
+  loaded precomputed local rotation features
+fallAndGetUp2_subject3.bvh (16/65)
+  loaded precomputed local rotation features
+fallAndGetUp3_subject1.bvh (17/65)
+  loaded precomputed local rotation features
+fight1_subject2.bvh (18/65)
+  loaded precomputed local rotation features
+fight1_subject5.bvh (19/65)
+  loaded precomputed local rotation features
+fightAndSports1_subject1.bvh (20/65)
+  loaded precomputed local rotation features
+ground1_subject1.bvh (21/65)
+  loaded precomputed local rotation features
+ground1_subject4.bvh (22/65)
+  loaded precomputed local rotation features
+ground2_subject2.bvh (23/65)
+  loaded precomputed local rotation features
+ground2_subject3.bvh (24/65)
+  loaded precomputed local rotation features
+jumps1_subject1.bvh (25/65)
+  loaded precomputed local rotation features
+jumps1_subject5.bvh (26/65)
+  loaded precomputed local rotation features
+multipleActions1_subject1.bvh (27/65)
+  loaded precomputed local rotation features
+multipleActions1_subject2.bvh (28/65)
+  loaded precomputed local rotation features
+multipleActions1_subject4.bvh (29/65)
+  loaded precomputed local rotation features
+obstacles1_subject1.bvh (30/65)
+  loaded precomputed local rotation features
+obstacles1_subject2.bvh (31/65)
+  loaded precomputed local rotation features
+obstacles1_subject5.bvh (32/65)
+  loaded precomputed local rotation features
+obstacles2_subject1.bvh (33/65)
+  loaded precomputed local rotation features
+obstacles2_subject2.bvh (34/65)
+  loaded precomputed local rotation features
+obstacles2_subject5.bvh (35/65)
+  loaded precomputed local rotation features
+obstacles3_subject3.bvh (36/65)
+  loaded precomputed local rotation features
+obstacles3_subject4.bvh (37/65)
+  loaded precomputed local rotation features
+obstacles4_subject2.bvh (38/65)
+  loaded precomputed local rotation features
+obstacles4_subject3.bvh (39/65)
+  loaded precomputed local rotation features
+obstacles4_subject4.bvh (40/65)
+  loaded precomputed local rotation features
+obstacles5_subject3.bvh (41/65)
+  loaded precomputed local rotation features
+  8 bad transition(s) detected, affected windows will be skipped
+  Skipped 330 window(s) containing jumps
+obstacles5_subject4.bvh (42/65)
+  loaded precomputed local rotation features
+obstacles6_subject1.bvh (43/65)
+  loaded precomputed local rotation features
+obstacles6_subject4.bvh (44/65)
+  loaded precomputed local rotation features
+obstacles6_subject5.bvh (45/65)
+  loaded precomputed local rotation features
+push1_subject2.bvh (46/65)
+  loaded precomputed local rotation features
+pushAndFall1_subject1.bvh (47/65)
+  loaded precomputed local rotation features
+pushAndFall1_subject4.bvh (48/65)
+  loaded precomputed local rotation features
+  10 bad transition(s) detected, affected windows will be skipped
+  Skipped 222 window(s) containing jumps
+pushAndStumble1_subject2.bvh (49/65)
+  loaded precomputed local rotation features
+pushAndStumble1_subject3.bvh (50/65)
+  loaded precomputed local rotation features
+run1_subject2.bvh (51/65)
+  loaded precomputed local rotation features
+run1_subject5.bvh (52/65)
+  loaded precomputed local rotation features
+run2_subject1.bvh (53/65)
+  loaded precomputed local rotation features
+sprint1_subject2.bvh (54/65)
+  loaded precomputed local rotation features
+sprint1_subject4.bvh (55/65)
+  loaded precomputed local rotation features
+walk1_subject1.bvh (56/65)
+  loaded precomputed local rotation features
+walk1_subject5.bvh (57/65)
+  loaded precomputed local rotation features
+walk2_subject1.bvh (58/65)
+  loaded precomputed local rotation features
+walk2_subject3.bvh (59/65)
+  loaded precomputed local rotation features
+walk2_subject4.bvh (60/65)
+  loaded precomputed local rotation features
+walk3_subject1.bvh (61/65)
+  loaded precomputed local rotation features
+walk3_subject2.bvh (62/65)
+  loaded precomputed local rotation features
+walk3_subject4.bvh (63/65)
+  loaded precomputed local rotation features
+walk3_subject5.bvh (64/65)
+  loaded precomputed local rotation features
+walk4_subject1.bvh (65/65)
+  loaded precomputed local rotation features
+Dataset ready: 407810 samples, 1 unique skeletons
