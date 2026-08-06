@@ -21,3 +21,5 @@ abl_rot_global_all,3,3,abl_rot_global_all.json,20260806-075008,./checkpoints/mod
 abl_rot_local_all,3,3,abl_rot_local_all.json,20260806-100918,./checkpoints/model_20260806-100918-best.pth,1-rotations(all),ok,2026-08-06 10:09:15,2026-08-06 12:59:42,170.4
 abl_rot_global_lafan,3,3,abl_rot_global_lafan.json,20260806-125945,./checkpoints/model_20260806-125945-best.pth,"1-rotations(lafan), 3-skeletons(single)",ok,2026-08-06 12:59:42,2026-08-06 15:03:47,124.1
 abl_rot_local_lafan,3,3,abl_rot_local_lafan.json,20260806-150350,./checkpoints/model_20260806-150350-best.pth,1-rotations(lafan),ok,2026-08-06 15:03:47,2026-08-06 17:45:07,161.3
+abl_fk_off,3,3,abl_fk_off.json,20260806-174510,./checkpoints/model_20260806-174510-best.pth,2-fk(ablated),ok,2026-08-06 17:45:07,2026-08-06 18:45:25,60.3
+abl_mdc_on,3,3,abl_mdc_on.json,20260806-184529,./checkpoints/model_20260806-184529-best.pth,4-mdc(ablated),ok,2026-08-06 18:45:25,2026-08-06 21:11:54,146.5
