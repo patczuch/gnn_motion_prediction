@@ -23,3 +23,9 @@ abl_rot_global_lafan,3,3,abl_rot_global_lafan.json,20260806-125945,./checkpoints
 abl_rot_local_lafan,3,3,abl_rot_local_lafan.json,20260806-150350,./checkpoints/model_20260806-150350-best.pth,1-rotations(lafan),ok,2026-08-06 15:03:47,2026-08-06 17:45:07,161.3
 abl_fk_off,3,3,abl_fk_off.json,20260806-174510,./checkpoints/model_20260806-174510-best.pth,2-fk(ablated),ok,2026-08-06 17:45:07,2026-08-06 18:45:25,60.3
 abl_mdc_on,3,3,abl_mdc_on.json,20260806-184529,./checkpoints/model_20260806-184529-best.pth,4-mdc(ablated),ok,2026-08-06 18:45:25,2026-08-06 21:11:54,146.5
+abl_rot_global_all,4,4,abl_rot_global_all.json,20260807-092616,./checkpoints/model_20260807-092616-best.pth,"1-rotations(all), 2-fk(baseline), 3-skeletons(multi), 4-mdc(baseline)",ok,2026-08-07 09:26:07,2026-08-07 11:15:56,109.8
+abl_rot_local_all,4,4,abl_rot_local_all.json,20260807-111559,./checkpoints/model_20260807-111559-best.pth,1-rotations(all),ok,2026-08-07 11:15:56,2026-08-07 13:20:52,124.9
+abl_rot_global_lafan,4,4,abl_rot_global_lafan.json,20260807-132055,./checkpoints/model_20260807-132055-best.pth,"1-rotations(lafan), 3-skeletons(single)",ok,2026-08-07 13:20:52,2026-08-07 15:20:26,119.6
+abl_rot_local_lafan,4,4,abl_rot_local_lafan.json,20260807-152029,./checkpoints/model_20260807-152029-best.pth,1-rotations(lafan),ok,2026-08-07 15:20:26,2026-08-07 18:38:51,198.4
+abl_fk_off,4,4,abl_fk_off.json,20260807-183855,./checkpoints/model_20260807-183855-best.pth,2-fk(ablated),ok,2026-08-07 18:38:51,2026-08-07 19:48:34,69.7
+abl_mdc_on,4,4,abl_mdc_on.json,20260807-194838,./checkpoints/model_20260807-194838-best.pth,4-mdc(ablated),ok,2026-08-07 19:48:34,2026-08-07 22:08:22,139.8
